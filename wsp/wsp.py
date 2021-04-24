@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 class Point:
     #A point located at (x,y) in 2D space.
@@ -138,9 +139,10 @@ def mindist(block_A, block_B):
         mind = dist
   return mind
 
-def runWSP(filename):
+def runWSP(filename, s, debug):
   points = []
   # read points from file
+  bounds = []
   with open(filename, 'r') as f:
      line = f.readline()
      while line != '':  # The EOF char is an empty string
@@ -149,21 +151,26 @@ def runWSP(filename):
         if len(line) == 0 or line[0] == '#': # ignores empty lines and #comments
           line = f.readline()
           continue
+        if len(line) > 7 and line[:7] == "bounds:":
+          bounds = [int(i) for i in line[7:].split(",")]
+          line = f.readline()
+          continue
         splitLine = line.split(",")
         p = Point(int(splitLine[0]), int(splitLine[1]))
         points.append(p)
         line = f.readline()
-  print(points, "\n")
-
+  
   # build point quadtree, insert in order
-  rootNode = QuadTree(Rect(0,0,10,10))
+  rootNode = QuadTree(Rect(bounds[0],bounds[1],bounds[2],bounds[3]))
   for point in points:
     rootNode.insert(point)
 
-  print(rootNode, "\n\n")
+  if (debug):
+    print(points, "\n")
+    print(rootNode, "\n\n")
 
   # WSP queue search
-  s = 1 # wsp separation factor
+  #s = 1 # wsp separation factor
   queue = [(rootNode, rootNode)]
   while len(queue) > 0:
     pair = queue[0]
@@ -172,11 +179,10 @@ def runWSP(filename):
     block_A, block_B = pair[0], pair[1]
     if len(block_A) == 0 or len(block_B) == 0:
       continue
-    #print(block_A.str_short())
-    #print(block_B.str_short())
-    #print(mindist(block_A, block_B))
+    
     if mindist(block_A, block_B) > s * block_A.diameter():
-      print("found a WSP: ", block_A.str_short(), " <~~~~~> ", block_B.str_short())#, block_A, block_B)
+      if (debug):
+        print("found a WSP: ", block_A.str_short(), " <~~~~~> ", block_B.str_short())#, block_A, block_B)
       block_A.connection = block_B
       block_B.connection = block_A
       continue
@@ -194,6 +200,3 @@ def runWSP(filename):
         queue.append((block_A, block_B.se))
         queue.append((block_A, block_B.sw))
   return rootNode
-
-# run algorithm
-wspTreeNode = runWSP("points.txt")
