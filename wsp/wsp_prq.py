@@ -2,6 +2,11 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
+# USES PR QUADTREE!
+
+fig = plt.figure(figsize=(6,6))
+ax = fig.add_subplot(1, 1, 1)
+
 class Point:
     #A point located at (x,y) in 2D space.
     def __init__(self, x, y):
@@ -80,11 +85,20 @@ class QuadTree:
 
     def divide(self):
         """Divide (branch) this node by spawning four children nodes around a point."""
-        self.nw = QuadTree(Rect(self.boundary.xMin, self.point.y, self.point.x, self.boundary.yMax), self.depth + 1)
-        self.ne = QuadTree(Rect(self.point.x, self.point.y, self.boundary.xMax, self.boundary.yMax), self.depth + 1)
-        self.se = QuadTree(Rect(self.point.x, self.boundary.yMin, self.boundary.xMax, self.point.y), self.depth + 1)
-        self.sw = QuadTree(Rect(self.boundary.xMin, self.boundary.yMin, self.point.x, self.point.y), self.depth + 1)
+        mid = Point((self.boundary.xMin + self.boundary.xMax) / 2, (self.boundary.yMin + self.boundary.yMax) / 2)
+        self.nw = QuadTree(Rect(self.boundary.xMin, mid.y, mid.x, self.boundary.yMax), self.depth + 1)
+        self.ne = QuadTree(Rect(mid.x, mid.y, self.boundary.xMax, self.boundary.yMax), self.depth + 1)
+        self.se = QuadTree(Rect(mid.x, self.boundary.yMin, self.boundary.xMax, mid.y), self.depth + 1)
+        self.sw = QuadTree(Rect(self.boundary.xMin, self.boundary.yMin, mid.x, mid.y), self.depth + 1)
         self.divided = True
+        # reinsert point
+        point_to_reinsert = self.point
+        self.point = None
+        if point_to_reinsert != None:
+          self.insert(point_to_reinsert)
+        # draw
+        plt.plot([mid.x, mid.x],[self.boundary.yMin, self.boundary.yMax], color="gray")
+        plt.plot([self.boundary.xMin, self.boundary.xMax],[mid.y, mid.y], color="gray")
 
     def insert(self, point):
         """Try to insert Point point into this QuadTree."""
@@ -92,14 +106,15 @@ class QuadTree:
             # The point does not lie inside boundary: bail.
             return False
 
-        if self.point == None:
-            # Node doesn't have a point yet.
-            self.point = point
-            return True
-
-        # Already leaf: divide if necessary, then try the sub-quads.
         if not self.divided:
-            self.divide()
+          if self.point == None:
+              # Node doesn't have a point yet.
+              self.point = point
+              #print("inserted point ", point, "in ", self.str_short())
+              return True
+
+          # Already leaf: divide if necessary, then try the sub-quads.
+          self.divide()
 
         return (self.ne.insert(point) or
                 self.nw.insert(point) or
@@ -144,23 +159,10 @@ def mindist(block_A, block_B):
         mind = dist
   return mind
 
-def plotPoints(points):
-  x = []
-  y = []
-  for p in points:
-    x.append(p.x)
-    y.append(p.y)
-
-  fig, ax = plt.subplots()
-  #fig = plt.scatter(x, y)
-  return fig, ax
-  #plt.draw()
-  #plt.show(block=False)
-
 def runWSP(filename, s, debug):
   points = []
   # read points from file
-  #bounds = []
+  bounds = []
   with open(filename, 'r') as f:
      line = f.readline()
      while line != '':  # The EOF char is an empty string
@@ -170,7 +172,7 @@ def runWSP(filename, s, debug):
           line = f.readline()
           continue
         if len(line) > 7 and line[:7] == "bounds:":
-          #bounds = [int(i) for i in line[7:].split(",")]
+          bounds = [int(i) for i in line[7:].split(",")]
           line = f.readline()
           continue
         splitLine = line.split(",")
@@ -178,24 +180,8 @@ def runWSP(filename, s, debug):
         points.append(p)
         line = f.readline()
   # find boundaries
-  minX = sys.float_info.max
-  minY = sys.float_info.max
-  maxX = sys.float_info.min
-  maxY = sys.float_info.min
-  for p in points:
-    if p.x < minX:
-      minX = p.x
-    if p.y < minY:
-      minY = p.y
-    if p.x > maxX:
-      maxX = p.x
-    if p.y > maxY:
-      maxY = p.y
 
   # plot points
-  fig = plt.figure(figsize=(6,6))
-  
-  ax = fig.add_subplot(1, 1, 1)
   x = []
   y = []
   for p in points:
@@ -204,7 +190,8 @@ def runWSP(filename, s, debug):
   fig = plt.scatter(x, y)
 
   # build point quadtree, insert in order
-  rootNode = QuadTree(Rect(minX,minY,maxX,maxY))
+  #rootNode = QuadTree(Rect(minX,minY,maxX,maxY))
+  rootNode = QuadTree(Rect(bounds[0],bounds[1],bounds[2],bounds[3]))
   for point in points:
     rootNode.insert(point)
 
@@ -225,13 +212,10 @@ def runWSP(filename, s, debug):
 
     block_A, block_B = pair[0], pair[1]
 
-    plt.plot([block_A.point.x, block_A.point.x],[block_A.boundary.yMin, block_A.boundary.yMax], color="gray")
-    plt.plot([block_A.boundary.xMin, block_A.boundary.xMax],[block_A.point.y, block_A.point.y], color="gray")
-
     if len(block_A) == 0 or len(block_B) == 0:
       continue
     
-    if mindist(block_A, block_B) >= s * block_A.diameter():
+    if mindist(block_A, block_B) > s * block_A.diameter():
       if (debug):
         print("found a WSP: ", block_A.str_short(), " <~~~~~> ", block_B.str_short())
       block_A.connection = block_B
