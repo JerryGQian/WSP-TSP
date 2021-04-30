@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+import matplotlib.pyplot as plt
 
 class Point:
     #A point located at (x,y) in 2D space.
@@ -45,6 +46,8 @@ class Rect:
     def diameter(self):
       # diagonal
       return np.hypot(self.xMax - self.xMin, self.yMax - self.yMin)
+    def center(self):
+      return ((self.xMax + self.xMin) / 2, (self.yMax + self.yMin) / 2)
 
 class QuadTree:
     """Point Quadtree implementation."""
@@ -72,6 +75,8 @@ class QuadTree:
 
     def diameter(self):
       return self.boundary.diameter()
+    def center(self):
+      return self.boundary.center()
 
     def divide(self):
         """Divide (branch) this node by spawning four children nodes around a point."""
@@ -139,10 +144,23 @@ def mindist(block_A, block_B):
         mind = dist
   return mind
 
+def plotPoints(points):
+  x = []
+  y = []
+  for p in points:
+    x.append(p.x)
+    y.append(p.y)
+
+  fig, ax = plt.subplots()
+  #fig = plt.scatter(x, y)
+  return fig, ax
+  #plt.draw()
+  #plt.show(block=False)
+
 def runWSP(filename, s, debug):
   points = []
   # read points from file
-  bounds = []
+  #bounds = []
   with open(filename, 'r') as f:
      line = f.readline()
      while line != '':  # The EOF char is an empty string
@@ -152,16 +170,41 @@ def runWSP(filename, s, debug):
           line = f.readline()
           continue
         if len(line) > 7 and line[:7] == "bounds:":
-          bounds = [int(i) for i in line[7:].split(",")]
+          #bounds = [int(i) for i in line[7:].split(",")]
           line = f.readline()
           continue
         splitLine = line.split(",")
-        p = Point(int(splitLine[0]), int(splitLine[1]))
+        p = Point(float(splitLine[0].strip()), float(splitLine[1].strip()))
         points.append(p)
         line = f.readline()
+  # find boundaries
+  minX = sys.float_info.max
+  minY = sys.float_info.max
+  maxX = sys.float_info.min
+  maxY = sys.float_info.min
+  for p in points:
+    if p.x < minX:
+      minX = p.x
+    if p.y < minY:
+      minY = p.y
+    if p.x > maxX:
+      maxX = p.x
+    if p.y > maxY:
+      maxY = p.y
+
+  # plot points
+  fig = plt.figure(figsize=(6,6))
   
+  ax = fig.add_subplot(1, 1, 1)
+  x = []
+  y = []
+  for p in points:
+    x.append(p.x)
+    y.append(p.y)
+  fig = plt.scatter(x, y)
+
   # build point quadtree, insert in order
-  rootNode = QuadTree(Rect(bounds[0],bounds[1],bounds[2],bounds[3]))
+  rootNode = QuadTree(Rect(minX,minY,maxX,maxY))
   for point in points:
     rootNode.insert(point)
 
@@ -171,12 +214,20 @@ def runWSP(filename, s, debug):
 
   # WSP queue search
   #s = 1 # wsp separation factor
+  plt.plot([rootNode.boundary.xMin, rootNode.boundary.xMax],[rootNode.boundary.yMin, rootNode.boundary.yMin], color="gray")
+  plt.plot([rootNode.boundary.xMin, rootNode.boundary.xMax],[rootNode.boundary.yMax, rootNode.boundary.yMax], color="gray")
+  plt.plot([rootNode.boundary.xMin, rootNode.boundary.xMin],[rootNode.boundary.yMin, rootNode.boundary.yMax], color="gray")
+  plt.plot([rootNode.boundary.xMax, rootNode.boundary.xMax],[rootNode.boundary.yMin, rootNode.boundary.yMax], color="gray")
   queue = [(rootNode, rootNode)]
   while len(queue) > 0:
     pair = queue[0]
     queue = queue[1:]
 
     block_A, block_B = pair[0], pair[1]
+
+    plt.plot([block_A.point.x, block_A.point.x],[block_A.boundary.yMin, block_A.boundary.yMax], color="gray")
+    plt.plot([block_A.boundary.xMin, block_A.boundary.xMax],[block_A.point.y, block_A.point.y], color="gray")
+
     if len(block_A) == 0 or len(block_B) == 0:
       continue
     
@@ -185,8 +236,14 @@ def runWSP(filename, s, debug):
         print("found a WSP: ", block_A.str_short(), " <~~~~~> ", block_B.str_short())#, block_A, block_B)
       block_A.connection = block_B
       block_B.connection = block_A
+      circle1 = plt.Circle(block_A.center(), block_A.diameter() / 2, color='r', fill=False)
+      circle2 = plt.Circle(block_B.center(), block_B.diameter() / 2, color='r', fill=False)
+      ax.add_patch(circle1)
+      ax.add_patch(circle2)
+      #line
+      plt.plot([block_A.center()[0], block_B.center()[0]],[block_A.center()[1], block_B.center()[1]])
       continue
-    
+
     if block_A.diameter() > block_B.diameter():
       if (block_A.divided):
         queue.append((block_B, block_A.nw))
@@ -199,4 +256,5 @@ def runWSP(filename, s, debug):
         queue.append((block_A, block_B.ne))
         queue.append((block_A, block_B.se))
         queue.append((block_A, block_B.sw))
+  
   return rootNode

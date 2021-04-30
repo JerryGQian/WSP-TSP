@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # run algorithm
-# >> python tsp-bfp.py <points file> <separation factor> <flags:{-d, -bf}>
-# >> python tsp-bfp.py points1.txt 1 -d
+# >> python tsp-poly.py <points file> <separation factor> <flags:{-d, -bf}>
+# >> python tsp-poly.py points1.txt 1 -d
 # -d: debug info quadtree and WSP
 # -bf: brute force (turns off WSP)
 
