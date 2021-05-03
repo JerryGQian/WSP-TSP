@@ -163,35 +163,55 @@ def runWSP(filename, s, debug):
   points = []
   # read points from file
   bounds = []
-  with open(filename, 'r') as f:
+  with open(filename, 'r') as f: # reads .TSP files
      line = f.readline()
+     mode = "start"
      while line != '':  # The EOF char is an empty string
-        if line[len(line) - 1] == "\n":
-          line = line[:-1]
-        if len(line) == 0 or line[0] == '#': # ignores empty lines and #comments
+        if line == "EOF\n":
+          break
+        if mode == "start":
+          if line[len(line) - 1] == "\n":
+            line = line[:-1]
+          if len(line) > 7 and line[:7] == "bounds:":
+            bounds = [int(i) for i in line[7:].split()]
+          if line == "NODE_COORD_SECTION":
+            mode = "node"
+          #if len(line) == 0 or line[0] == '#': # ignores empty lines and #comments
           line = f.readline()
           continue
-        if len(line) > 7 and line[:7] == "bounds:":
-          bounds = [int(i) for i in line[7:].split(",")]
+        # start reading node coords
+        if mode == "node":
+          if line == "TOUR_SECTION\n":
+            mode = "tour"
+            break
+          splitLine = line.split()
+          if len(splitLine) == 3:
+            splitLine = splitLine[1:]
+          p = Point(float(splitLine[0].strip()), float(splitLine[1].strip()))
+          points.append(p)
           line = f.readline()
-          continue
-        splitLine = line.split(",")
-        p = Point(float(splitLine[0].strip()), float(splitLine[1].strip()))
-        points.append(p)
-        line = f.readline()
-  # find boundaries
 
-  # plot points
-  x = []
-  y = []
+  # find boundaries
+  minX = float('inf')
+  minY = float('inf')
+  maxX = float('-inf')
+  maxY = float('-inf')
   for p in points:
-    x.append(p.x)
-    y.append(p.y)
-  fig = plt.scatter(x, y)
+    if p.x < minX:
+      minX = p.x
+    if p.y < minY:
+      minY = p.y
+    if p.x > maxX:
+      maxX = p.x
+    if p.y > maxY:
+      maxY = p.y
+  maxX += 1
+  maxY += 1
+
 
   # build point quadtree, insert in order
-  #rootNode = QuadTree(Rect(minX,minY,maxX,maxY))
-  rootNode = QuadTree(Rect(bounds[0],bounds[1],bounds[2],bounds[3]))
+  rootNode = QuadTree(Rect(minX,minY,maxX,maxY))
+  #rootNode = QuadTree(Rect(bounds[0],bounds[1],bounds[2],bounds[3]))
   for point in points:
     rootNode.insert(point)
 
@@ -241,4 +261,12 @@ def runWSP(filename, s, debug):
         queue.append((block_A, block_B.se))
         queue.append((block_A, block_B.sw))
   
+  # plot points
+  x = []
+  y = []
+  for p in points:
+    x.append(p.x)
+    y.append(p.y)
+  fig = plt.scatter(x, y)
+
   return rootNode
