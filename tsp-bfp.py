@@ -1,4 +1,4 @@
-from wsp import wsp
+from wsp import wsp_prq
 import sys
 import math
 import numpy as np
@@ -26,7 +26,7 @@ for arg in sys.argv:
     if arg == "-bf":
         wsp_mode = False
 # build WSP tree
-wspTreeNode = wsp.runWSP(filename, s, debug)
+wspTreeNode = wsp_prq.runWSP(filename, s, debug)
 
 # calculate well separated dictionary
 ws = dict() # point -> set of well separated points (far away by WSP)

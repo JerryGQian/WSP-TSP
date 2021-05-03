@@ -82,33 +82,37 @@ def calcDist(points):
         dist += euclidDist(points[i], points[i+1])
     return dist
 
-def buildPerms(perm, rem):
-    next_perms = []
+def findPath(start, rem):
+    perm = [start]
     if len(perm) == num_points:
         return [perm]
-    for r in rem:
-        last_point = perm[len(perm) - 1]
-        orig_set_finished = True
-        if r in ws[last_point]: # checks if all points in last_point <-> r set have been visited
-            for p in perm:
-                if (r in ws_orig[last_point]) and (p in ws_orig[last_point][r]):
-                    orig_set_finished = False
-        if (r not in ws[last_point]) or (orig_set_finished):
-            new_point_list = perm.copy()
-            new_point_list.append(r)
-            new_rem = rem.copy()
-            new_rem.remove(r)
-            if len(new_point_list) == num_points:
-                next_perms.append(new_point_list)
-            else:
-                next_perms.extend(buildPerms(new_point_list, new_rem))
-    return next_perms
+    while len(rem) > 0:
+        minNext = None
+        minNextDist = float('inf')
+        for r in rem:
+            last_point = perm[len(perm) - 1]
+            orig_set_finished = True
+            if r in ws[last_point]: # checks if all points in last_point <-> r set have been visited
+                for p in perm:
+                    if (r in ws_orig[last_point]) and (p in ws_orig[last_point][r]):
+                        orig_set_finished = False
+            if (r not in ws[last_point]) or (orig_set_finished):
+                curNextDist = euclidDist(last_point, r)
+                if curNextDist < minNextDist:
+                    minNext = r
+                    minNextDist = curNextDist
+        if minNext == None:
+            minNext = rem[0]
+        #print(minNext, rem)
+        perm.append(minNext)
+        rem.remove(minNext)
+    return perm
 
 perms = []
 for p in points:
     rem = points.copy()
     rem.remove(p)
-    perms.extend(buildPerms([p], rem))
+    perms.append(findPath(p, rem))
 
 print(len(perms), "permutations examined")
 
