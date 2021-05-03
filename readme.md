@@ -1,7 +1,7 @@
 # Well Separated Pairs and the Traveling Salesman Problem
 
 ### Instructions for Running
->python tsp-nnp.py \<points file\> <separation factor> <flags:{-d, -bf}> \
+>python tsp-nnp.py \<TSP dataset file\> <separation factor> <flags:{-d, -bf}> \
 >python tsp-nnp.py att48.tsp 5
 >python tsp-nnp.py vlsi/xqf131.tsp 5
 
@@ -12,8 +12,8 @@ flags:
 ```
 
 ### Directory Structure
-`tsp-bfp.py` - Brute Force + WSP Pruning algorithm \
-`tsp-nnp.py` - Nearest Neighbor + WSP Pruning algorithm \
+`tsp-bfp.py` - Brute Force + WSP Pruning algorithm - Exponential \
+`tsp-nnp.py` - Nearest Neighbor + WSP Pruning algorithm - Polynomial \
 Point set data is located inside the `/data` directory \
 WSP implementation inside `/wsp` directory
 
