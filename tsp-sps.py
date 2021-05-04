@@ -74,11 +74,15 @@ def find_relations(tree_node):
         sub_relations.union(find_relations(tree_node.se))
 
     node_point_set = set(tree_node.get_points())
+    to_remove = []
     if len(sub_relations) > 0:
         for p in sub_relations:
             if p in node_point_set:
                 print("removing")
-                sub_relations.remove(p)
+                to_remove.append(p)
+                #sub_relations.remove(p)
+        for p in to_remove:
+            sub_relations.remove(p)
         splits.insert(0, (node_point_set, sub_relations.copy()))
 
     return sub_relations

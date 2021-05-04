@@ -100,9 +100,10 @@ while queue:
     queue.remove(minEdge)
     node = minEdge[0]
     prev = minEdge[2]
-    if prev != None:
+    if prev != None and node not in added:
         if prev not in mst:
             mst[prev] = set()
+        
         mst[prev].add(node)
     #cost = queue[node]
 
@@ -116,13 +117,14 @@ while queue:
 print(mst)
 drawn = set()
 def draw_mst(node):
-    print(node)
+    #print(node)
     if node in mst and node not in drawn:
         for neighbor in mst[node]:
             wsp.ax[1].plot([node.x, neighbor.x],[node.y, neighbor.y], color="blue")
             if neighbor in mst:
                 draw_mst(neighbor)
             drawn.add(node)
+print(points[0])
 draw_mst(points[0])
 
 '''
