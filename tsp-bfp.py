@@ -55,15 +55,17 @@ if wsp_mode:
         # add WSP relationships to ws
         if anode.connection != None:
             wsp_count += 1
-            bnode = anode.connection
-            apoints = anode.get_points()
-            bpoints = bnode.get_points()
-            for a in apoints:
-                for b in bpoints:
-                    ws[a].add(b)
-                    ws[b].add(a)
-                    ws_orig[a][b] = apoints
-                    ws_orig[b][a] = bpoints
+            #bnode = anode.connection
+            if len(anode.connection) > 0:
+                for bnode in anode.connection:
+                    apoints = anode.get_points()
+                    bpoints = bnode.get_points()
+                    for a in apoints:
+                        for b in bpoints:
+                            ws[a].add(b)
+                            ws[b].add(a)
+                            ws_orig[a][b] = apoints
+                            ws_orig[b][a] = bpoints
         if anode.divided:
             q.append(anode.ne)
             q.append(anode.nw)
@@ -127,6 +129,12 @@ for perm in perms:
     if dist < minDist:
         minSolution = perm
         minDist = dist
+
+for i in range(len(minSolution) - 1):
+    wsp.ax[1].plot([minSolution[i].x, minSolution[i+1].x],[minSolution[i].y, minSolution[i+1].y], color="red")
+wsp.ax[0].set_title(f"#WSP={wsp_count}, s={s}")
+wsp.ax[1].set_title(f"TSP Path: n={len(points)}, length={minDist:0.4f}")
+
 print("")
 print("Solution:", minSolution)
 print("Solution Distance:", minDist)
