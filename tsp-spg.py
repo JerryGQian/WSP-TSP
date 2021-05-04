@@ -76,12 +76,54 @@ for p1 in graph:
             edge_count_graph.add((p1, p2))
             edge_count_graph.add((p2, p1))
             wsp_count += 1
-            wsp.ax[1].plot([p1.x, p2.x],[p1.y, p2.y], color="red")
+            #wsp.ax[1].plot([p1.x, p2.x],[p1.y, p2.y], color="red")
 
 print("___________________________________________________________")
 print(num_points, "points")
 print(int(wsp_count/2), "WSPs found")
 print(f"Loaded in {timeStart - timeInit:0.4f} seconds")
+
+
+queue = [(points[0], 0, None)]
+added = set()
+mst = {}
+#min_span_tree_cost = 0
+# Prims alg
+while queue:
+    # Choose the adjacent node with the least edge cost
+    minCost = float('inf')
+    minEdge = None
+    for tup in queue:
+        if tup[1] < minCost:
+            minCost = tup[1]
+            minEdge = tup
+    queue.remove(minEdge)
+    node = minEdge[0]
+    prev = minEdge[2]
+    if prev != None:
+        if prev not in mst:
+            mst[prev] = set()
+        mst[prev].add(node)
+    #cost = queue[node]
+
+    if node not in added:
+        #min_span_tree_cost += cost
+        added.add(node)
+        for neighbor in graph[node]:
+            if neighbor not in added:
+                queue.append((neighbor, node.distance_to(neighbor), node))
+
+print(mst)
+drawn = set()
+def draw_mst(node):
+    print(node)
+    if node in mst and node not in drawn:
+        for neighbor in mst[node]:
+            wsp.ax[1].plot([node.x, neighbor.x],[node.y, neighbor.y], color="blue")
+            if neighbor in mst:
+                draw_mst(neighbor)
+            drawn.add(node)
+draw_mst(points[0])
 
 '''
 # traversal
