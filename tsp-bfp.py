@@ -1,8 +1,11 @@
-from wsp import wsp_prq
+from wsp import wsp
+from wsp import ds
+from wsp import util
 import sys
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 # run algorithm
 # >> python tsp-bfp.py <points file> <separation factor> <flags:{-d, -bf}>
@@ -10,10 +13,13 @@ import matplotlib.pyplot as plt
 # -d: debug info quadtree and WSP
 # -bf: brute force (turns off WSP)
 
+timeInit = time.perf_counter()
+
 filename = "data/points.txt"
 s = 1           # default separation factor
 wsp_mode = True # uses WSPs
 debug = False   # debug info for Quadtree and WSPs
+quadtree = ds.PointQuadTree
 
 if (len(sys.argv) >= 2):
   filename = "data/" + sys.argv[1]
@@ -21,12 +27,16 @@ if (len(sys.argv) >= 3):
   s = int(sys.argv[2])
 # check flags
 for arg in sys.argv:
+    if arg == "-pr":
+        quadtree = ds.PRQuadTree
+    if arg == "-point" or arg == "-p":
+        quadtree = ds.PointQuadTree
     if arg == "-d":
         debug = True
     if arg == "-bf":
         wsp_mode = False
 # build WSP tree
-wspTreeNode = wsp_prq.runWSP(filename, s, debug)
+wspTreeNode = wsp.runWSP(filename, s, debug, quadtree)
 
 # calculate well separated dictionary
 ws = dict() # point -> set of well separated points (far away by WSP)

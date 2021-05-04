@@ -1,4 +1,6 @@
-from wsp import wsp_prq
+from wsp import wsp
+from wsp import ds
+from wsp import util
 import sys
 import math
 import numpy as np
@@ -6,8 +8,8 @@ import matplotlib.pyplot as plt
 import time
 
 # run algorithm
-# >> python tsp-nnp.py <points file> <separation factor> <flags:{-d, -bf}>
-# >> python tsp-nnp.py att48.tsp 1 -d
+# >> python tsp-nnp.py <points file> <separation factor> <quadtree:{-pr, -point/-p}> <flags:{-d, -bf}>
+# >> python tsp-nnp.py att48.tsp 1 -p -d
 # -d: debug info quadtree and WSP
 # -bf: brute force (turns off WSP)
 
@@ -17,6 +19,7 @@ filename = "data/points.txt"
 s = 1           # default separation factor
 wsp_mode = True # uses WSPs
 debug = False   # debug info for Quadtree and WSPs
+quadtree = ds.PointQuadTree
 
 if (len(sys.argv) >= 2):
   filename = "data/" + sys.argv[1]
@@ -24,12 +27,16 @@ if (len(sys.argv) >= 3):
   s = int(sys.argv[2])
 # check flags
 for arg in sys.argv:
+    if arg == "-pr":
+        quadtree = ds.PRQuadTree
+    if arg == "-point" or arg == "-p":
+        quadtree = ds.PointQuadTree
     if arg == "-d":
         debug = True
     if arg == "-bf":
         wsp_mode = False
 # build WSP tree
-wspTreeNode = wsp_prq.runWSP(filename, s, debug)
+wspTreeNode = wsp.runWSP(filename, s, debug, quadtree)
 
 timeStart = time.perf_counter()
 
@@ -48,17 +55,18 @@ if wsp_mode:
         anode = q[0]
         q = q[1:]
         # add WSP relationships to ws
-        if anode.connection != None:
-            wsp_count += 1
-            bnode = anode.connection
-            apoints = anode.get_points()
-            bpoints = bnode.get_points()
-            for a in apoints:
-                for b in bpoints:
-                    ws[a].add(b)
-                    ws[b].add(a)
-                    ws_orig[a][b] = apoints
-                    ws_orig[b][a] = bpoints
+        if len(anode.connection) > 0:
+            for bnode in anode.connection:
+                wsp_count += 1
+                #bnode = anode.connection
+                apoints = anode.get_points()
+                bpoints = bnode.get_points()
+                for a in apoints:
+                    for b in bpoints:
+                        ws[a].add(b)
+                        ws[b].add(a)
+                        ws_orig[a][b] = apoints
+                        ws_orig[b][a] = bpoints
         if anode.divided:
             q.append(anode.ne)
             q.append(anode.nw)
@@ -71,22 +79,11 @@ print("___________________________________________________________")
 print(num_points, "points")
 print(int(wsp_count/2), "WSPs found")
 print(f"Loaded in {timeStart - timeInit:0.4f} seconds")
-#print(ws)
 
 # traversal
 solution = []
 minSolution = []
 minDist = float('inf')
-
-
-def euclidDist(p1, p2):
-    return math.sqrt( ((p2.x - p1.x) ** 2) + ((p2.y - p1.y) ** 2) )
-
-def calcDist(points):
-    dist = 0
-    for i in range(len(points) - 1):
-        dist += euclidDist(points[i], points[i+1])
-    return dist
 
 def findPath(start, rem):
     perm = [start]
@@ -103,7 +100,7 @@ def findPath(start, rem):
                     if (r in ws_orig[last_point]) and (p in ws_orig[last_point][r]):
                         orig_set_finished = False
             if (r not in ws[last_point]) or (orig_set_finished) or not wsp_mode:
-                curNextDist = euclidDist(last_point, r)
+                curNextDist = util.euclidDist(last_point, r)
                 if curNextDist < minNextDist:
                     minNext = r
                     minNextDist = curNextDist
@@ -114,20 +111,26 @@ def findPath(start, rem):
         rem.remove(minNext)
     return perm
 
+# search for permutations
 perms = []
 for p in points:
     rem = points.copy()
     rem.remove(p)
     perms.append(findPath(p, rem))
-
-
+# find shortest permutation
 for perm in perms:
-    dist = calcDist(perm)
+    dist = util.calcDist(perm)
     if dist < minDist:
         minSolution = perm
         minDist = dist
 
 timeEnd = time.perf_counter()
+
+for i in range(len(minSolution) - 1):
+    wsp.ax[1].plot([minSolution[i].x, minSolution[i+1].x],[minSolution[i].y, minSolution[i+1].y], color="red")
+wsp.ax[0].set_title(f"#WSP={wsp_count}, s={s}")
+wsp.ax[1].set_title(f"TSP Path: n={len(points)}, length={minDist:0.4f}")
+
 print("")
 print("Solution:", minSolution)
 print("Solution Distance:", minDist)
@@ -135,4 +138,3 @@ print(len(perms), "permutations examined")
 print(f"Solution found in {timeEnd - timeStart:0.4f} seconds")
 print("___________________________________________________________")
 plt.show()
-#print(calcDist([wsp.Point(1,0),wsp.Point(8,1)]))
