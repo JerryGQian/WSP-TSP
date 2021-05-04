@@ -48,6 +48,8 @@ def loadFromFile(filename):
             maxX = p.x
         if p.y > maxY:
             maxY = p.y
+    minX -= 1
+    minY -= 1
     maxX += 1
     maxY += 1
 

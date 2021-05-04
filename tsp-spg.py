@@ -67,7 +67,7 @@ def build_wsp_graph(cur_node):
 
 wsp_count = 0
 build_wsp_graph(wspTreeNode)
-print(graph)
+print("graph:", graph)
 
 edge_count_graph = set()
 for p1 in graph:
@@ -100,6 +100,7 @@ while queue:
     queue.remove(minEdge)
     node = minEdge[0]
     prev = minEdge[2]
+    #print(node)
     if prev != None and node not in added:
         if prev not in mst:
             mst[prev] = set()
@@ -110,11 +111,12 @@ while queue:
     if node not in added:
         #min_span_tree_cost += cost
         added.add(node)
+        #print("neighbor:", graph[node])
         for neighbor in graph[node]:
             if neighbor not in added:
                 queue.append((neighbor, node.distance_to(neighbor), node))
 
-print(mst)
+print("mst:", mst)
 drawn = set()
 def draw_mst(node):
     #print(node)
@@ -127,118 +129,25 @@ def draw_mst(node):
 print(points[0])
 draw_mst(points[0])
 
-'''
-# traversal
-def closest_sub(p1, sublist):
-  """Min dist point of sublist from p1"""
-  mind = 99999999
-  minPoint = None
-  for p2 in sublist:
-    dist = p1.distance_to(p2)
-    if dist < mind:
-        mind = dist
-        minPoint = p2
-  return minPoint, mind
+path = []
+# traverse MST
+def traverse_mst_for_path(prev, cur):
+    def calc_angle(node):
+        x = 0
 
-def find_subpath(src, glist):
-    if src == None: # try all points
-        minPath = []
-        minLen = float('inf')
-        for p in glist:
-            rem = glist.copy()
-            rem.remove(p)
-            #print("new subpath", p)
-            if isinstance(p, list):
-                path = find_subpath(None, p)
-            else:
-                path = find_path(p, rem)
-            length = util.calcDist(path)
-            if length < minLen:
-                minLen = length
-                minPath = path
-        return path
-    else:
-        start,_ = closest_sub(src, glist)
-        rem = glist.copy()
-        rem.remove(start)
-        #print("srced subpath", start)
-        return find_path(start, rem)
+    # order paths
+    ordered_children = []
+    if cur in mst:
+        for child in mst[cur]:
+            traverse_mst_for_path(cur, child)
 
-def find_subpath_ends(src, dest, glist):
-    if src == None: # try all points
-        minPath = []
-        minLen = float('inf')
-        for p in glist:
-            rem = glist.copy()
-            rem.remove(p)
-            #print("new subpath", p)
-            if isinstance(p, list):
-                path = find_subpath(None, p)
-            else:
-                path = find_path(p, rem)
-            length = util.calcDist(path)
-            if length < minLen:
-                minLen = length
-                minPath = path
-        return path
-    else:
-        start,_ = closest_sub(src, glist)
-        rem = glist.copy()
-        rem.remove(start)
-        #print("srced subpath", start)
-        return find_path(start, rem)
+    path.append(cur)
 
-def find_path(start, rem):
-    path = [start]
-    if len(path) == num_points:
-        return [path]
-    while len(rem) > 0:
-        last_point = path[len(path) - 1]
-        #print(last_point)
-        minNext = None
-        minNextDist = float('inf')
-        for r in rem: # look through rem for next
-            if isinstance(r, list):
-                _, curNextDist = closest_sub(last_point, r)
-                #path += find_subpath(last_point, r)
-                #rem.remove(r)
-            else:
-                #print(last_point)
-                curNextDist = last_point.distance_to(r)
-            if curNextDist < minNextDist:
-                minNext = r
-                minNextDist = curNextDist
-        if minNext == None:
-            minNext = rem[0] # shouldnt be needed?
-        if isinstance(minNext, list):
-            path += find_subpath(last_point, minNext)
-            #print(minNext)
-        else:
-            #print("should be point",minNext, len(rem))
-            path.append(minNext)
-        rem.remove(minNext)
-    return path
-
-# search for permutations
-perms = []
-for item in grouped_points:
-    if isinstance(item, list):
-        rem = grouped_points.copy()
-        perms.append(find_subpath(None, rem))
-    else:
-        rem = grouped_points.copy()
-        rem.remove(item)
-        perms.append(find_path(item, rem))
+traverse_mst_for_path(None, points[0])
 
 # find shortest permutation
-solution = []
-minSolution = []
-minDist = float('inf')
-for perm in perms:
-    dist = util.calcDist(perm)
-    if dist < minDist:
-        minSolution = perm
-        minDist = dist
+minSolution = path
+minDist = util.calcDist(path)
 
 timeEnd = time.perf_counter()
 
@@ -250,7 +159,7 @@ wsp.ax[1].set_title(f"TSP Path: n={len(points)}, length={minDist:0.4f}")
 print("")
 print("Solution:", minSolution)
 print("Solution Distance:", minDist)
-print(len(perms), "permutations examined")
-print(f"Solution found in {timeEnd - timeStart:0.4f} seconds")'''
+print(1, "permutations examined")
+print(f"Solution found in {timeEnd - timeStart:0.4f} seconds")
 print("___________________________________________________________")
 plt.show()
