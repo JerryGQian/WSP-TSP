@@ -8,6 +8,14 @@ class Point:
         return '{}'.format(str((self.x, self.y)))
     def __str__(self):
         return 'P({:.2f}, {:.2f})'.format(self.x, self.y)
+    def __add__(self, o):
+        return Point(self.x + o.x, self.y + o.y)
+    def __sub__(self, o):
+        return Point(self.x - o.x, self.y - o.y)
+    def __truediv__(self, o):
+        return Point(self.x / o, self.y / o)
+    def to_list(self):
+        return [self.x, self.y]
     def distance_to(self, other):
         try:
             other_x, other_y = other.x, other.y

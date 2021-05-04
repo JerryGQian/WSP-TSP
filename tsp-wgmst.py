@@ -10,8 +10,8 @@ import time
 # SPG = sub problem graph
 
 # run algorithm
-# >> python tsp-spg.py <points file> <separation factor> <quadtree:{-pr, -point/-p}> <flags:{-d, -bf}>
-# >> python tsp-spg.py att48.tsp 1 -p -d
+# >> python tsp-wgmst.py <points file> <separation factor> <quadtree:{-pr}> <flags:{-d, -bf}>
+# >> python tsp-wgmst.py att48.tsp 1 -p -d
 # -d: debug info quadtree and WSP
 # -bf: brute force (turns off WSP)
 
@@ -21,7 +21,7 @@ filename = "data/points.txt"
 s = 1           # default separation factor
 wsp_mode = True # uses WSPs
 debug = False   # debug info for Quadtree and WSPs
-quadtree = ds.PointQuadTree
+quadtree = ds.PRQuadTree
 
 if (len(sys.argv) >= 2):
   filename = "data/" + sys.argv[1]
@@ -132,14 +132,46 @@ draw_mst(points[0])
 path = []
 # traverse MST
 def traverse_mst_for_path(prev, cur):
-    def calc_angle(node):
-        x = 0
+    # init prev to opposite of avg of neighbors
+    if prev == None:
+        avg = ds.Point(0,0)
+        for child in mst[cur]:
+            avg += child - cur
+        avg /= len(mst[cur])
+        prev = cur - avg
 
-    # order paths
+    vec_prev = (prev - cur).to_list()
+    vec_prev_unit = vec_prev / np.linalg.norm(vec_prev)
+    def calc_angle(node):
+        vec_next = (node - cur).to_list()
+        vec_next_unit = vec_next / np.linalg.norm(vec_next)
+        dot_prod = np.dot(vec_prev_unit, vec_next_unit)
+        angle = np.arccos(dot_prod)
+        perp = [vec_next_unit[1], -vec_next_unit[0]]
+
+        is_cc = np.dot(vec_prev_unit, perp) < 0
+        # invert the angles for counter-clockwise rotations
+        if is_cc:
+            angle = 2*np.pi - angle
+
+        return angle
+
+    # order children
     ordered_children = []
     if cur in mst:
         for child in mst[cur]:
-            traverse_mst_for_path(cur, child)
+            angle = calc_angle(child)
+            if len(ordered_children) == 0:
+                ordered_children.append((child, angle))
+            else:
+                for i in range(len(ordered_children)):
+                    if angle < ordered_children[i][1]:
+                        ordered_children.insert(i, (child, angle))
+                    if i == len(ordered_children)-1:
+                        ordered_children.append((child, angle))
+        # traverse in angle order
+        for pair in ordered_children:
+            traverse_mst_for_path(cur, pair[0])
 
     path.append(cur)
 
@@ -147,6 +179,7 @@ traverse_mst_for_path(None, points[0])
 
 # find shortest permutation
 minSolution = path
+minSolution.append(minSolution[0])
 minDist = util.calcDist(path)
 
 timeEnd = time.perf_counter()
