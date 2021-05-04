@@ -9,7 +9,7 @@ import time
 
 # run algorithm
 # >> python tsp-bfp.py <points file> <separation factor> <flags:{-d, -bf}>
-# >> python tsp-bfp.py points1.txt 1 -d
+# >> python tsp-bfp.py custom1.tsp 1 -d
 # -d: debug info quadtree and WSP
 # -bf: brute force (turns off WSP)
 
