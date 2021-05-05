@@ -13,8 +13,8 @@ flags:
 ```
 
 ### Directory Structure
-`tsp-bfp.py` - Brute Force + WSP Pruning algorithm - Exponential \
-`tsp-nnp.py` - Nearest Neighbor + WSP Pruning algorithm - Polynomial \
+`tsp-bfp.py` - Brute Force + WSP Pruning algorithm - Exponential (BROKEN) \
+`tsp-nnp.py` - Nearest Neighbor + WSP Pruning algorithm - Polynomial (BROKEN) \
 `tsp-sps.py` - Subproblem Sorting with WSP - Polynomial - questionable results \
 `tsp-wgmst.py` - WSP Graph MST, builds MST out of graph found from WSP min projections - In progress. Motivation: https://www.cs.umd.edu/~mount/Indep/Chaojun_Li/final-rept.pdf \
 Point set data is located inside the `/data` directory \
