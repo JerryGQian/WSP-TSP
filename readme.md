@@ -4,6 +4,7 @@
 >python tsp-nnp.py \<TSP dataset file\> <separation factor> <flags:{-d, -bf}> \
 >python tsp-nnp.py att48.tsp 5
 >python tsp-nnp.py vlsi/xqf131.tsp 5
+>python tsp-wgmst.py vlsi/xqf131.tsp 1 -pr
 
 ```
 flags:
