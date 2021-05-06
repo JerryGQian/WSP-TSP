@@ -36,7 +36,7 @@ for arg in sys.argv:
     if arg == "-bf":
         wsp_mode = False
 # build WSP tree
-wspTreeNode = wsp.runWSP(filename, s, debug, quadtree)
+wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, quadtree)
 
 timeStart = time.perf_counter()
 
@@ -44,7 +44,6 @@ timeStart = time.perf_counter()
 ws = dict() # point -> set of well separated points (far away by WSP)
 ws_orig = dict() # point a -> dict( WSP point b -> WSP set containing point a )
 points = wspTreeNode.get_points()
-wsp_count = 0
 for p in points:
     ws[p] = set()
     ws_orig[p] = dict()
@@ -57,7 +56,7 @@ if wsp_mode:
         # add WSP relationships to ws
         if len(anode.connection) > 0:
             for bnode in anode.connection:
-                wsp_count += 1
+                #wsp_count += 1
                 #bnode = anode.connection
                 apoints = anode.get_points()
                 bpoints = bnode.get_points()

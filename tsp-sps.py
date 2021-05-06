@@ -36,7 +36,7 @@ for arg in sys.argv:
     if arg == "-bf":
         wsp_mode = False
 # build WSP tree
-wspTreeNode = wsp.runWSP(filename, s, debug, quadtree)
+wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, quadtree)
 
 timeStart = time.perf_counter()
 
@@ -44,7 +44,6 @@ timeStart = time.perf_counter()
 ws = dict() # point -> set of well separated points (far away by WSP)
 ws_orig = dict() # point a -> dict( WSP point b -> WSP set containing point a )
 points = wspTreeNode.get_points()
-wsp_count = 0
 for p in points:
     ws[p] = set()
     ws_orig[p] = dict()
@@ -53,7 +52,7 @@ points = wspTreeNode.get_points()
 num_points = len(points)
 print("___________________________________________________________")
 print(num_points, "points")
-print(int(wsp_count/2), "WSPs found")
+print(int(wsp_count), "WSPs found")
 print(f"Loaded in {timeStart - timeInit:0.4f} seconds")
 
 # [ ([a,b,c],[d,e,f]) , ([a,b,c],[d,e,f]) ]
@@ -78,7 +77,7 @@ def find_relations(tree_node):
     if len(sub_relations) > 0:
         for p in sub_relations:
             if p in node_point_set:
-                print("removing")
+                #print("removing")
                 to_remove.append(p)
                 #sub_relations.remove(p)
         for p in to_remove:
@@ -215,10 +214,12 @@ def find_path(start, rem):
         if minNext == None:
             minNext = rem[0] # shouldnt be needed?
         if isinstance(minNext, list):
+            print("minNext sub", minNext)
             path += find_subpath(last_point, minNext)
             #print(minNext)
         else:
-            #print("should be point",minNext, len(rem))
+            print("should be point",minNext, len(rem))
+            
             path.append(minNext)
         rem.remove(minNext)
     return path
@@ -243,7 +244,7 @@ for perm in perms:
     if dist < minDist:
         minSolution = perm
         minDist = dist
-
+print("perms", perms)
 timeEnd = time.perf_counter()
 
 for i in range(len(minSolution) - 1):

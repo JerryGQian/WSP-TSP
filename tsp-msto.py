@@ -85,7 +85,8 @@ print(f"Loaded in {timeStart - timeInit:0.4f} seconds")
 queue = [(points[0], 0, None)]
 added = set()
 mst = {}
-#min_span_tree_cost = 0
+#mst_parent = {}
+
 # Prims alg
 while queue:
     # Choose the adjacent node with the least edge cost
@@ -102,8 +103,10 @@ while queue:
     if prev != None and node not in added:
         if prev not in mst:
             mst[prev] = set()
-        
+        if node not in mst:
+            mst[node] = set()
         mst[prev].add(node)
+        mst[node].add(prev)
     #cost = queue[node]
 
     if node not in added:
@@ -119,17 +122,44 @@ drawn = set()
 def draw_mst(node):
     #print(node)
     if node in mst and node not in drawn:
+        drawn.add(node)
         for neighbor in mst[node]:
-            wsp.ax[1].plot([node.x, neighbor.x],[node.y, neighbor.y], color="blue")
-            if neighbor in mst:
-                draw_mst(neighbor)
-            drawn.add(node)
+            if neighbor not in drawn:
+                wsp.ax[1].plot([node.x, neighbor.x],[node.y, neighbor.y], color="blue")
+                if neighbor in mst:
+                    draw_mst(neighbor)
 print(points[0])
 draw_mst(points[0])
 
 path = []
+# optimize MST
+def optimize_mst(node, lim=6):
+    print("optimizing", node)
+    # find collection of neighbor points
+    to_optimize = set()
+
+    def add_nodes(n):
+        queue = [n]
+        while len(queue) > 0:
+            cur = queue[0]
+            queue = queue[1:]
+            for neighbor in mst[cur]:
+                to_optimize.add(neighbor)
+                if len(to_optimize) >= lim:
+                    break
+                queue.append(neighbor)
+            if len(to_optimize) >= lim:
+                    break
+
+    add_nodes(node)
+    print(to_optimize)
+
+
+
+optimize_mst(points[0])
+
 # traverse MST
-def traverse_mst_for_path(prev, cur):
+'''def traverse_mst_for_path(prev, cur):
     # init prev to opposite of avg of neighbors
     if prev == None:
         avg = ds.Point(0,0)
@@ -173,17 +203,17 @@ def traverse_mst_for_path(prev, cur):
 
     path.append(cur)
 
-traverse_mst_for_path(None, points[0])
+traverse_mst_for_path(None, points[0])'''
 
 # find shortest permutation
 minSolution = path
-minSolution.append(minSolution[0])
+#minSolution.append(minSolution[0])
 minDist = util.calcDist(path)
 
 timeEnd = time.perf_counter()
 
-for i in range(len(minSolution) - 1):
-    wsp.ax[1].plot([minSolution[i].x, minSolution[i+1].x],[minSolution[i].y, minSolution[i+1].y], color="red")
+#for i in range(len(minSolution) - 1):
+    #wsp.ax[1].plot([minSolution[i].x, minSolution[i+1].x],[minSolution[i].y, minSolution[i+1].y], color="red")
 wsp.ax[0].set_title(f"#WSP={wsp_count}, s={s}")
 wsp.ax[1].set_title(f"TSP Path: n={len(points)}, length={minDist:0.4f}")
 

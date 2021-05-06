@@ -22,6 +22,8 @@ def runWSP(filename, s, debug, quadtree):
     print(points, "\n")
     print(rootNode, "\n\n")
 
+  wsp_count = 0
+
   # WSP queue search
   #s = 1 # wsp separation factor
   ax[0].plot([rootNode.boundary.xMin, rootNode.boundary.xMax],[rootNode.boundary.yMin, rootNode.boundary.yMin], color="gray")
@@ -47,6 +49,7 @@ def runWSP(filename, s, debug, quadtree):
     if ds.min_dist(block_A, block_B) >= s * block_A.diameter() or (len(points_A) == 1 and len(points_B) == 1 and not block_A.divided  and not block_B.divided):
       if (debug):
         print("found a WSP: ", block_A.str_short(), " <~~~~~> ", block_B.str_short())
+      wsp_count += 1
       block_A.connection.append(block_B)
       block_B.connection.append(block_A)
       circle1 = plt.Circle(block_A.center(), block_A.diameter() / 2, color='r', fill=False)
@@ -80,4 +83,4 @@ def runWSP(filename, s, debug, quadtree):
   ax[0].scatter(x, y)
   ax[1].scatter(x, y)
 
-  return rootNode
+  return rootNode, wsp_count
