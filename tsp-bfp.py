@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
+# Brute Force + WSP Pruning
+
 # run algorithm
 # >> python tsp-bfp.py <points file> <separation factor> <quadtree:{-point/-p, -pr, -pmr}> <flags:{-d, -bf}>
 # >> python tsp-bfp.py custom1.tsp 1
@@ -79,14 +81,12 @@ def buildPerms(perm, rem):
         return [perm]
     for r in rem:
         last_point = perm[len(perm) - 1]
-        print(last_point, perm)
         orig_set_finished = True
         if r in ws[last_point]: # checks if all points in last_point <-> r set have been visited
-            #print("checking ", r, ws[last_point])
-            for p in perm:
-                if (r in ws_orig[last_point]) and (p in ws_orig[last_point][r]):
-                    orig_set_finished = False
-        #print("building", perm, r, (r not in ws[last_point]), (orig_set_finished))
+            if (r in ws_orig[last_point]):
+                for p in ws_orig[last_point][r]:
+                    if (p not in perm):
+                        orig_set_finished = False
         if (r not in ws[last_point]) or (orig_set_finished):
             new_point_list = perm.copy()
             new_point_list.append(r)
