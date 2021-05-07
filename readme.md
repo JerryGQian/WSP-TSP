@@ -6,7 +6,7 @@
 >python tsp-nnp.py vlsi/xqf131.tsp 5 \
 >python tsp-wgmst.py vlsi/xqf131.tsp 1 -pr \
 >python wsp-quadtree-test.py att48.tsp 1 -pr -b4 \
->python wsp-quadtree-test.py att48.tsp 1 -pmr \
+>python wsp-quadtree-test.py att48.tsp 1 -pmr
 
 ```
 flags:
