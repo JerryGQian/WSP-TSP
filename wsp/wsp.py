@@ -7,12 +7,10 @@ import matplotlib.pyplot as plt
 # USES PR QUADTREE!
 fig, ax = plt.subplots(1, 2, figsize=(12,6))
 
-def runWSP(filename, s, debug, quadtree):
+def runWSP(filename, s, debug, quadtree, bucket):
   points, minX, minY, maxX, maxY = file_load.loadFromFile(filename)
   # build point quadtree, insert in order
-  rootNode = quadtree(ds.Rect(minX,minY,maxX,maxY), ax)
-  #rootNode = ds.PRQuadTree(ds.Rect(minX,minY,maxX,maxY), ax)
-  #rootNode = ds.PointQuadTree(ds.Rect(minX,minY,maxX,maxY), ax)
+  rootNode = quadtree(ds.Rect(minX,minY,maxX,maxY), ax, bucket)
 
   #rootNode = QuadTree(Rect(bounds[0],bounds[1],bounds[2],bounds[3]))
   for point in points:

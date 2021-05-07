@@ -1,6 +1,7 @@
 from wsp import wsp
 from wsp import ds
 from wsp import util
+from wsp import cmd_parse
 import sys
 import math
 import numpy as np
@@ -8,35 +9,16 @@ import matplotlib.pyplot as plt
 import time
 
 # run algorithm
-# >> python tsp-spp.py <points file> <separation factor> <quadtree:{-pr, -point/-p}> <flags:{-d, -bf}>
-# >> python tsp-spp.py att48.tsp 1 -p -d
+# >> python tsp-sps.py <points file> <separation factor> <quadtree:{-pr, -point/-p}> <flags:{-d, -bf}>
+# >> python tsp-sps.py att48.tsp 1 -pr
 # -d: debug info quadtree and WSP
 # -bf: brute force (turns off WSP)
 
 timeInit = time.perf_counter()
 
-filename = "data/points.txt"
-s = 1           # default separation factor
-wsp_mode = True # uses WSPs
-debug = False   # debug info for Quadtree and WSPs
-quadtree = ds.PointQuadTree
-
-if (len(sys.argv) >= 2):
-  filename = "data/" + sys.argv[1]
-if (len(sys.argv) >= 3):
-  s = int(sys.argv[2])
-# check flags
-for arg in sys.argv:
-    if arg == "-pr":
-        quadtree = ds.PRQuadTree
-    if arg == "-point" or arg == "-p":
-        quadtree = ds.PointQuadTree
-    if arg == "-d":
-        debug = True
-    if arg == "-bf":
-        wsp_mode = False
+filename, s, wsp_mode, debug, quadtree, bucket = cmd_parse.parse_cmd(sys.argv)
 # build WSP tree
-wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, quadtree)
+wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, quadtree, bucket)
 
 timeStart = time.perf_counter()
 
@@ -214,11 +196,11 @@ def find_path(start, rem):
         if minNext == None:
             minNext = rem[0] # shouldnt be needed?
         if isinstance(minNext, list):
-            print("minNext sub", minNext)
+            #print("minNext sub", minNext)
             path += find_subpath(last_point, minNext)
             #print(minNext)
-        else:
-            print("should be point",minNext, len(rem))
+        #else:
+            #print("should be point",minNext, len(rem))
             
             path.append(minNext)
         rem.remove(minNext)

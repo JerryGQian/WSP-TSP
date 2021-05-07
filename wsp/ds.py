@@ -80,12 +80,13 @@ def min_proj(block_A, block_B):
 class PMRQuadTree:
     """Point Region Quadtree implementation."""
 
-    def __init__(self, boundary, ax, depth=0):
+    def __init__(self, boundary, ax, bucket=-1, depth=0):
         """Initialize this node of the quadtree."""
         self.boundary = boundary # boundary of current block
+        self.bucket = bucket
         self.ax = ax
         self.depth = depth # mostly for string visualization spacing
-        self.point = None # center point
+        self.points = [] # center point
         self.connection = [] # WSP connection
         self.divided = False # flag for if divided into 4 child quads
 
@@ -110,36 +111,38 @@ class PMRQuadTree:
     def divide(self):
         """Divide (branch) this node by spawning four children nodes around a point."""
         mid = Point((self.boundary.xMin + self.boundary.xMax) / 2, (self.boundary.yMin + self.boundary.yMax) / 2)
-        self.nw = PMRQuadTree(Rect(self.boundary.xMin, mid.y, mid.x, self.boundary.yMax), self.ax, self.depth + 1)
-        self.ne = PMRQuadTree(Rect(mid.x, mid.y, self.boundary.xMax, self.boundary.yMax), self.ax, self.depth + 1)
-        self.se = PMRQuadTree(Rect(mid.x, self.boundary.yMin, self.boundary.xMax, mid.y), self.ax, self.depth + 1)
-        self.sw = PMRQuadTree(Rect(self.boundary.xMin, self.boundary.yMin, mid.x, mid.y), self.ax, self.depth + 1)
+        self.nw = PMRQuadTree(Rect(self.boundary.xMin, mid.y, mid.x, self.boundary.yMax), self.ax, self.bucket, self.depth + 1)
+        self.ne = PMRQuadTree(Rect(mid.x, mid.y, self.boundary.xMax, self.boundary.yMax), self.ax, self.bucket,  self.depth + 1)
+        self.se = PMRQuadTree(Rect(mid.x, self.boundary.yMin, self.boundary.xMax, mid.y), self.ax, self.bucket, self.depth + 1)
+        self.sw = PMRQuadTree(Rect(self.boundary.xMin, self.boundary.yMin, mid.x, mid.y), self.ax, self.bucket, self.depth + 1)
         self.divided = True
         # reinsert point
-        point_to_reinsert = self.point
-        self.point = None
-        if point_to_reinsert != None:
-          self.insert(point_to_reinsert)
+        points_to_reinsert = self.points
+        self.points = []
+        for p in points_to_reinsert:
+          #self.insert(p, True)
+          self.ne.insert(p, True)
+          self.nw.insert(p, True)
+          self.se.insert(p, True)
+          self.sw.insert(p, True)
         # draw
         self.ax[0].plot([mid.x, mid.x],[self.boundary.yMin, self.boundary.yMax], color="gray")
         self.ax[0].plot([self.boundary.xMin, self.boundary.xMax],[mid.y, mid.y], color="gray")
         self.ax[1].plot([mid.x, mid.x],[self.boundary.yMin, self.boundary.yMax], color="gray")
         self.ax[1].plot([self.boundary.xMin, self.boundary.xMax],[mid.y, mid.y], color="gray")
 
-    def insert(self, point):
+    def insert(self, point, no_divide=False):
         """Try to insert Point point into this QuadTree."""
         if not self.boundary.contains(point):
             # The point does not lie inside boundary: bail.
             return False
 
         if not self.divided:
-          if self.point == None:
-              # Node doesn't have a point yet.
-              self.point = point
-              return True
+          self.points.append(point)
+          if not no_divide and len(self.points) > 1:
+            self.divide()
 
-          # Already leaf: divide if necessary, then try the sub-quads.
-          self.divide()
+          return True
 
         return (self.ne.insert(point) or
                 self.nw.insert(point) or
@@ -148,8 +151,8 @@ class PMRQuadTree:
 
     def get_points_rec(self, found_points):
         """Find the points in the quadtree that lie within boundary."""
-        if self.point != None:
-            found_points.append(self.point)
+        for point in self.points:
+            found_points.append(point)
 
         # if this node has children, search them too.
         if self.divided:
@@ -164,10 +167,7 @@ class PMRQuadTree:
 
     def __len__(self):
         """Return the number of points in the quadtree."""
-        if self.point != None:
-          npoints = 1
-        else:
-          npoints = 0
+        npoints = len(self.points)
         if self.divided:
             npoints += len(self.nw)+len(self.ne)+len(self.se)+len(self.sw)
         return npoints
@@ -178,12 +178,13 @@ class PMRQuadTree:
 class PRQuadTree:
     """Point Region Quadtree implementation."""
 
-    def __init__(self, boundary, ax, depth=0):
+    def __init__(self, boundary, ax, bucket=1, depth=0):
         """Initialize this node of the quadtree."""
         self.boundary = boundary # boundary of current block
+        self.bucket = bucket
         self.ax = ax
         self.depth = depth # mostly for string visualization spacing
-        self.point = None # center point
+        self.points = [] # center point
         self.connection = [] # WSP connection
         self.divided = False # flag for if divided into 4 child quads
 
@@ -208,16 +209,16 @@ class PRQuadTree:
     def divide(self):
         """Divide (branch) this node by spawning four children nodes around a point."""
         mid = Point((self.boundary.xMin + self.boundary.xMax) / 2, (self.boundary.yMin + self.boundary.yMax) / 2)
-        self.nw = PRQuadTree(Rect(self.boundary.xMin, mid.y, mid.x, self.boundary.yMax), self.ax, self.depth + 1)
-        self.ne = PRQuadTree(Rect(mid.x, mid.y, self.boundary.xMax, self.boundary.yMax), self.ax, self.depth + 1)
-        self.se = PRQuadTree(Rect(mid.x, self.boundary.yMin, self.boundary.xMax, mid.y), self.ax, self.depth + 1)
-        self.sw = PRQuadTree(Rect(self.boundary.xMin, self.boundary.yMin, mid.x, mid.y), self.ax, self.depth + 1)
+        self.nw = PRQuadTree(Rect(self.boundary.xMin, mid.y, mid.x, self.boundary.yMax), self.ax, self.bucket, self.depth + 1)
+        self.ne = PRQuadTree(Rect(mid.x, mid.y, self.boundary.xMax, self.boundary.yMax), self.ax, self.bucket,  self.depth + 1)
+        self.se = PRQuadTree(Rect(mid.x, self.boundary.yMin, self.boundary.xMax, mid.y), self.ax, self.bucket, self.depth + 1)
+        self.sw = PRQuadTree(Rect(self.boundary.xMin, self.boundary.yMin, mid.x, mid.y), self.ax, self.bucket, self.depth + 1)
         self.divided = True
         # reinsert point
-        point_to_reinsert = self.point
-        self.point = None
-        if point_to_reinsert != None:
-          self.insert(point_to_reinsert)
+        points_to_reinsert = self.points
+        self.points = []
+        for p in points_to_reinsert:
+          self.insert(p)
         # draw
         self.ax[0].plot([mid.x, mid.x],[self.boundary.yMin, self.boundary.yMax], color="gray")
         self.ax[0].plot([self.boundary.xMin, self.boundary.xMax],[mid.y, mid.y], color="gray")
@@ -231,9 +232,9 @@ class PRQuadTree:
             return False
 
         if not self.divided:
-          if self.point == None:
+          if len(self.points) < self.bucket:
               # Node doesn't have a point yet.
-              self.point = point
+              self.points.append(point)
               return True
 
           # Already leaf: divide if necessary, then try the sub-quads.
@@ -246,8 +247,8 @@ class PRQuadTree:
 
     def get_points_rec(self, found_points):
         """Find the points in the quadtree that lie within boundary."""
-        if self.point != None:
-            found_points.append(self.point)
+        for point in self.points:
+            found_points.append(point)
 
         # if this node has children, search them too.
         if self.divided:
@@ -262,10 +263,7 @@ class PRQuadTree:
 
     def __len__(self):
         """Return the number of points in the quadtree."""
-        if self.point != None:
-          npoints = 1
-        else:
-          npoints = 0
+        npoints = len(self.points)
         if self.divided:
             npoints += len(self.nw)+len(self.ne)+len(self.se)+len(self.sw)
         return npoints
@@ -274,7 +272,7 @@ class PRQuadTree:
 class PointQuadTree:
     """Point Quadtree implementation."""
 
-    def __init__(self, boundary, ax, depth=0):
+    def __init__(self, boundary, ax, bucket=-1, depth=0):
         """Initialize this node of the quadtree."""
         self.boundary = boundary # boundary of current block
         self.ax = ax
