@@ -98,15 +98,15 @@ def buildPerms(perm, rem):
                 next_perms.extend(buildPerms(new_point_list, new_rem))
     return next_perms
 
-perms = []
-for p in points:
-    rem = points.copy()
-    rem.remove(p)
-    perms.extend(buildPerms([p], rem))
+# start at points[0]
+rem = points.copy()
+rem.remove(points[0])
+perms = buildPerms([points[0]], rem)
 
 print(len(perms), "permutations examined")
 
 for perm in perms:
+    perm.append(perm[0])
     dist = calcDist(perm)
     if dist < minDist:
         minSolution = perm

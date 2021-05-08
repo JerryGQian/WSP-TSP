@@ -13,7 +13,7 @@ def parse_cmd(argv):
     if (len(argv) >= 2):
         filename = "data/" + argv[1]
     if (len(argv) >= 3):
-        s = int(argv[2])
+        s = float(argv[2])
     # check flags
     for arg in argv:
         if arg == "-pmr":

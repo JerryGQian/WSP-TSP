@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, 2, figsize=(12,6))
 
 def runWSP(filename, s, debug, quadtree, bucket):
-  points, minX, minY, maxX, maxY = file_load.loadFromFile(filename)
+  points, minX, minY, maxX, maxY = file_load.loadFromFile(filename, False)
   # build point quadtree, insert in order
   rootNode = quadtree(ds.Rect(minX,minY,maxX,maxY), ax, bucket)
 

@@ -1,4 +1,5 @@
 import numpy as np
+from wsp import util
 
 class Point:
     #A point located at (x,y) in 2D space.
@@ -61,9 +62,9 @@ def min_dist(block_A, block_B):
 
 def min_proj(block_A, block_B):
   """Min dist between points from Quadtree block_A and Quadtree block_B"""
-  points_A = block_A.get_points()
-  points_B = block_B.get_points()
-  mind = 99999999
+  set_A = block_A.get_points()
+  set_B = block_B.get_points()
+  '''mind = 99999999
   min_p1 = None
   min_p2 = None
   for p_A in points_A:
@@ -72,8 +73,8 @@ def min_proj(block_A, block_B):
       if dist < mind:
         mind = dist
         min_p1 = p_A
-        min_p2 = p_B
-  return min_p1, min_p2
+        min_p2 = p_B'''
+  return util.min_proj(set_A, set_B)#min_p1, min_p2
 
 # PMR QUADTREE
 
@@ -191,7 +192,7 @@ class PRQuadTree:
     def __str__(self):
         """Return a string representation of this node, suitably formatted."""
         sp = ' ' * self.depth * 2
-        s = str(self.boundary) + ' --> ' + str(self.point) 
+        s = str(self.boundary) + ' --> ' + str(self.points) 
         if not self.divided:
             return s
         return s + '\n' + '\n'.join([
@@ -199,7 +200,7 @@ class PRQuadTree:
                 sp + 'se: ' + str(self.se), sp + 'sw: ' + str(self.sw)])
 
     def str_short(self):
-      return str(self.boundary)
+      return str(self.get_points()) #str(self.boundary) + 
 
     def diameter(self):
       return self.boundary.diameter()

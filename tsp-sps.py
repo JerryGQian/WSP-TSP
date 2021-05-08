@@ -40,7 +40,7 @@ print(f"Loaded in {timeStart - timeInit:0.4f} seconds")
 # [ ([a,b,c],[d,e,f]) , ([a,b,c],[d,e,f]) ]
 splits = []
 
-def find_relations(tree_node):
+def find_relations(tree_node, add=True):
     sub_relations = set()
 
     if len(tree_node.connection) > 0:
@@ -49,10 +49,10 @@ def find_relations(tree_node):
                 sub_relations.add(p)
 
     if tree_node.divided:
-        sub_relations.union(find_relations(tree_node.ne))
-        sub_relations.union(find_relations(tree_node.nw))
-        sub_relations.union(find_relations(tree_node.sw))
-        sub_relations.union(find_relations(tree_node.se))
+        sub_relations.union(find_relations(tree_node.ne, True))
+        sub_relations.union(find_relations(tree_node.nw, True))
+        sub_relations.union(find_relations(tree_node.sw, True))
+        sub_relations.union(find_relations(tree_node.se, True))
 
     node_point_set = set(tree_node.get_points())
     to_remove = []
@@ -64,19 +64,31 @@ def find_relations(tree_node):
                 #sub_relations.remove(p)
         for p in to_remove:
             sub_relations.remove(p)
-        splits.insert(0, (node_point_set, sub_relations.copy()))
+        if add:
+            #print("insert:", (node_point_set, sub_relations.copy()))
+            splits.insert(0, (node_point_set, sub_relations.copy()))
+
+    '''if tree_node.divided:
+        find_relations(tree_node.ne, True)
+        find_relations(tree_node.nw, True)
+        find_relations(tree_node.sw, True)
+        find_relations(tree_node.se, True)'''
 
     return sub_relations
 
-find_relations(wspTreeNode)
+find_relations(wspTreeNode, True)
 print(splits)
 
 def apply_split(pair, glist):
     list1 = []
     list2 = []    
+    to_remove = []
+    to_add = []
     for item in glist:
         if isinstance(item, list):
-            item = apply_split(pair, item.copy())
+            # recurse down list, add later
+            to_remove.append(item)
+            to_add.append(apply_split(pair, item.copy()))
         else:
             if item in pair[0]:
                 list1.append(item)
@@ -84,8 +96,10 @@ def apply_split(pair, glist):
             elif item in pair[1]:
                 list2.append(item)
                 #glist.remove(item)
-    for item in (list1 + list2):
+    for item in (list1 + list2 + to_remove):
         glist.remove(item)
+    for item in to_add: # sublists
+        glist.append(item)
 
     if len(list1) == 1:
         glist.append(list1[0])
@@ -100,21 +114,15 @@ def apply_split(pair, glist):
 grouped_points = points.copy()
 
 for pair in splits:
-    grouped_points = apply_split(pair, grouped_points.copy())
+    if len(pair[0]) >= 2 or len(pair[1]) >= 2:
+        grouped_points = apply_split(pair, grouped_points.copy())
+        #print("after pair:", pair, " -> ", grouped_points)
     #print("GP: ", grouped_points)
 #print(points)
-print(grouped_points)
-'''for g in grouped_points:
-    if isinstance(g, list):
-        for i in g:
-            if isinstance(i, list):
-                print("has sublist")
-        print(len(g))
-    else:
-        print("1")'''
+#print(grouped_points)
 
 # traversal
-def closest_sub(p1, sublist):
+'''def closest_sub(p1, sublist):
   """Min dist point of sublist from p1"""
   mind = 99999999
   minPoint = None
@@ -125,55 +133,8 @@ def closest_sub(p1, sublist):
         minPoint = p2
   return minPoint, mind
 
-def find_subpath(src, glist):
-    if src == None: # try all points
-        minPath = []
-        minLen = float('inf')
-        for p in glist:
-            rem = glist.copy()
-            rem.remove(p)
-            #print("new subpath", p)
-            if isinstance(p, list):
-                path = find_subpath(None, p)
-            else:
-                path = find_path(p, rem)
-            length = util.calcDist(path)
-            if length < minLen:
-                minLen = length
-                minPath = path
-        return path
-    else:
-        start,_ = closest_sub(src, glist)
-        rem = glist.copy()
-        rem.remove(start)
-        #print("srced subpath", start)
-        return find_path(start, rem)
 
-def find_subpath_ends(src, dest, glist):
-    if src == None: # try all points
-        minPath = []
-        minLen = float('inf')
-        for p in glist:
-            rem = glist.copy()
-            rem.remove(p)
-            #print("new subpath", p)
-            if isinstance(p, list):
-                path = find_subpath(None, p)
-            else:
-                path = find_path(p, rem)
-            length = util.calcDist(path)
-            if length < minLen:
-                minLen = length
-                minPath = path
-        return path
-    else:
-        start,_ = closest_sub(src, glist)
-        rem = glist.copy()
-        rem.remove(start)
-        #print("srced subpath", start)
-        return find_path(start, rem)
-
-def find_path(start, rem):
+def find_pathX(start, rem):
     path = [start]
     if len(path) == num_points:
         return [path]
@@ -188,7 +149,6 @@ def find_path(start, rem):
                 #path += find_subpath(last_point, r)
                 #rem.remove(r)
             else:
-                #print(last_point)
                 curNextDist = last_point.distance_to(r)
             if curNextDist < minNextDist:
                 minNext = r
@@ -204,18 +164,110 @@ def find_path(start, rem):
             
             path.append(minNext)
         rem.remove(minNext)
+    return path'''
+
+def does_list_contain(point, lst):
+    for item in lst:
+        if isinstance(item, list):
+            if does_list_contain(point, item):
+                return True
+        else:
+            if item == point:
+                return True
+    return False
+
+def find_list_with(point, lst):
+    for item in lst:
+        if isinstance(item, list):
+            if does_list_contain(point, item):
+                return item
+        else:
+            if item == point:
+                return item
+    return None
+
+def clean_deep_lists(lst):
+    if len(lst) == 1:
+        lst[0] = clean_deep_lists(lst[0])
+        return lst[0]
+    return lst
+
+def find_path(start, glist, end):
+
+    #print(start, end)
+    reverse = False
+    if start == None:
+        reverse = True
+        start = end
+        end = None
+        #rem = glist
+    orig_start = start
+    glist = clean_deep_lists(glist)
+
+    #print("glist:", glist)
+    #print("start:", start)
+    rem = glist.copy()
+    if start not in glist:
+        start = find_list_with(start, glist)
+        #print("new start", start)
+    rem.remove(start) 
+    #print("rem:  ", rem)
+    #print(len(rem))
+    trio_path = [(None, start, None)]
+    if len(rem) == 0:
+        trio_path = [(orig_start, start, None)]
+    # perform nearest neighbor on topmost layer
+    while len(rem) > 0:
+        prev_trio = trio_path[len(trio_path) - 1] # trio is (prev point, item, next point)
+        prev_item = prev_trio[1]
+        minNext = None
+        minNextDist = float('inf')
+        for r in rem: # look through rem for next
+            p_A, p_B = util.min_proj_set_or_point(prev_item, r)
+            dist = p_A.distance_to(p_B)
+            if end != None and r == end:
+                dist += 9999999999 # end_penalty
+            if dist < minNextDist:
+                minNext = (p_A, r, p_B) # (prev point, next item, next point)
+                minNextDist = dist
+        #print("conn next", minNext)
+        #print("triopath", trio_path, minNext, rem, end)
+        trio_path[len(trio_path) - 1] = (prev_trio[0], prev_trio[1], minNext[0])
+        trio_path.append((minNext[2], minNext[1], None))
+        rem.remove(minNext[1])
+
+    # convert to list, make subcalls
+    path = []
+    print("trio_path:", trio_path)
+    for trio in trio_path:
+        #print("trio:", trio)
+        if isinstance(trio[1], list):
+            path += find_path(trio[0], trio[1], trio[2])
+        else:
+            path.append(trio[1])
+    if reverse:
+        path.reverse()
     return path
+
 
 # search for permutations
 perms = []
 for item in grouped_points:
+    rem = grouped_points.copy()
+    #rem.remove(item)
+    print("start", item)
+    perms.append(find_path(item, rem, item))
+    '''if isinstance(item, list):
+    else:
+        perms.append(find_path(item, rem))'''
+'''for item in grouped_points:
     if isinstance(item, list):
         rem = grouped_points.copy()
         perms.append(find_subpath(None, rem))
     else:
         rem = grouped_points.copy()
         rem.remove(item)
-        perms.append(find_path(item, rem))
+        perms.append(find_path(item, rem))'''
 
 # find shortest permutation
 solution = []

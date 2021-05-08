@@ -1,11 +1,13 @@
 from wsp import ds
+from random import randrange
 import numpy as np
 import random
 
-def loadFromFile(filename):
+def loadFromFile(filename, do_offset=False):
     points = []
     # read points from file
     bounds = []
+    offset = [1020, 1890] # jittering dataset by epsilon 1 and 2
     with open(filename, 'r') as f: # reads .TSP files
         line = f.readline()
         mode = "start"
@@ -48,10 +50,15 @@ def loadFromFile(filename):
             maxX = p.x
         if p.y > maxY:
             maxY = p.y
-    minX -= 1
-    minY -= 1
-    maxX += 1
-    maxY += 1
+    minX -= 1.1
+    minY -= 1.1
+    maxX += 1.1
+    maxY += 1.1
+    if do_offset:
+        minX -= randrange(50)
+        minY -= randrange(50)
+        maxX += randrange(50)
+        maxY += randrange(50)
 
     random.shuffle(points)
 
