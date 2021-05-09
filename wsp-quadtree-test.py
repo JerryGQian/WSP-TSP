@@ -11,7 +11,7 @@ import time
 # SPG = sub problem graph
 
 # run algorithm
-# >> python wsp-quadtree-test.py <points file> <separation factor> <quadtree:{-p/-point, -pr, -pmr}> <flags:{-d, -b<bucket_size>}>
+# >> python wsp-quadtree-test.py <points file> <separation factor> <quadtree:{-p/-point, -pr, -pmr, -pk/-pkpr}> <flags:{-d, -b<bucket_size>}>
 # >> python wsp-quadtree-test.py att48.tsp 1 -p
 # >> python wsp-quadtree-test.py att48.tsp 1 -pr -b4
 # -d: debug info quadtree and WSP

@@ -125,13 +125,13 @@ def optimize_mst(node, lim=6):
         while len(queue) > 0:
             cur = queue[0]
             queue = queue[1:]
-            for neighbor in mst[cur]:
+            '''for neighbor in mst[cur]:
                 to_optimize.add(neighbor)
                 if len(to_optimize) >= lim:
                     break
                 queue.append(neighbor)
             if len(to_optimize) >= lim:
-                    break
+                    break'''
 
     add_nodes(node)
     print(to_optimize)

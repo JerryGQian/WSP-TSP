@@ -89,18 +89,29 @@ class PKPRQuadTree:
         self.ax = ax
         self.depth = depth # mostly for string visualization spacing
         self.points = [] # center point
+        self.children = [] # includes points and nodes
         self.connection = [] # WSP connection
         self.divided = False # flag for if divided into 4 child quads
+        self.pk_aggregated = False # flag for if aggregated
+        self.leaf = False
 
     def __str__(self):
         """Return a string representation of this node, suitably formatted."""
-        sp = ' ' * self.depth * 2
-        s = str(self.boundary) + ' --> ' + str(self.points) 
-        if not self.divided:
-            return s
-        return s + '\n' + '\n'.join([
-                sp + 'nw: ' + str(self.nw), sp + 'ne: ' + str(self.ne),
-                sp + 'se: ' + str(self.se), sp + 'sw: ' + str(self.sw)])
+        if self.pk_aggregated:
+          sp = ' ' * self.depth * 2
+          s = str(self.boundary) + ' --> ' + str(self.points) 
+          #print(self.depth, len(self.children))
+          for c in self.children:
+            s += '\n' + sp + 'child:' + str(c)
+          return s
+        else:
+          sp = ' ' * self.depth * 2
+          s = str(self.boundary) + ' --> ' + str(self.points) 
+          if not self.divided:
+              return s
+          return s + '\n' + '\n'.join([
+                  sp + 'nw: ' + str(self.nw), sp + 'ne: ' + str(self.ne),
+                  sp + 'se: ' + str(self.se), sp + 'sw: ' + str(self.sw)])
 
     def str_short(self):
       return str(self.get_points()) #str(self.boundary) + 
@@ -126,8 +137,8 @@ class PKPRQuadTree:
         # draw
         self.ax[0].plot([mid.x, mid.x],[self.boundary.yMin, self.boundary.yMax], color="gray")
         self.ax[0].plot([self.boundary.xMin, self.boundary.xMax],[mid.y, mid.y], color="gray")
-        self.ax[1].plot([mid.x, mid.x],[self.boundary.yMin, self.boundary.yMax], color="gray")
-        self.ax[1].plot([self.boundary.xMin, self.boundary.xMax],[mid.y, mid.y], color="gray")
+        self.ax[1].plot([mid.x, mid.x],[self.boundary.yMin, self.boundary.yMax], color="lightgray")
+        self.ax[1].plot([self.boundary.xMin, self.boundary.xMax],[mid.y, mid.y], color="lightgray")
 
     def insert(self, point):
         """Try to insert Point point into this QuadTree."""
@@ -156,20 +167,81 @@ class PKPRQuadTree:
 
         # if this node has children, search them too.
         if self.divided:
-          self.nw.get_points_rec(found_points)
-          self.ne.get_points_rec(found_points)
-          self.se.get_points_rec(found_points)
-          self.sw.get_points_rec(found_points)
+          if self.nw != None:
+            self.nw.get_points_rec(found_points)
+          if self.ne != None:
+            self.ne.get_points_rec(found_points)
+          if self.se != None:
+            self.se.get_points_rec(found_points)
+          if self.sw != None:
+            self.sw.get_points_rec(found_points)
+          
         return found_points
 
     def get_points(self):
       return self.get_points_rec([])
 
+    def pk_draw(self):
+      for child in self.children:
+        if len(child) > 1:
+          child.pk_draw()
+        elif child.leaf:
+          self.ax[1].plot([child.boundary.xMin, child.boundary.xMax],[child.boundary.yMin, child.boundary.yMin], color="blue")
+          self.ax[1].plot([child.boundary.xMin, child.boundary.xMax],[child.boundary.yMax, child.boundary.yMax], color="blue")
+          self.ax[1].plot([child.boundary.xMin, child.boundary.xMin],[child.boundary.yMin, child.boundary.yMax], color="blue")
+          self.ax[1].plot([child.boundary.xMax, child.boundary.xMax],[child.boundary.yMin, child.boundary.yMax], color="blue")
+
+    def pk_aggregate(self, k, parent=None):
+      # removes k-empty nodes and reassigns to grandparents
+      self.pk_aggregated = True
+
+      if self.divided:
+        rec_children = []
+        rec_children.append(self.nw.pk_aggregate(k, self))
+        rec_children.append(self.ne.pk_aggregate(k, self))
+        rec_children.append(self.se.pk_aggregate(k, self))
+        rec_children.append(self.sw.pk_aggregate(k, self))
+        for c in rec_children:
+          if c != None:
+            self.children.append(c)
+
+        #print(len(self.children), rec_children)
+        if len(self.children) == 0:
+          self.divided = False
+
+        '''self.nw = None
+        self.ne = None
+        self.se = None
+        self.sw = None'''
+
+        if parent != None:
+          if len(self) < k:
+            # pass children upwards
+            #print("len", len(self), k)
+            parent.children += self.children
+            return None
+          else:
+            return self
+      else:
+        #print("leaf node", len(self.points))
+        self.leaf = True
+        if len(self.points) > 0:
+          return self
+        else:
+          return None
+      
+      return self
+
     def __len__(self):
         """Return the number of points in the quadtree."""
         npoints = len(self.points)
         if self.divided:
-            npoints += len(self.nw)+len(self.ne)+len(self.se)+len(self.sw)
+            npoints += len(self.nw) if self.nw != None else 0
+            npoints += len(self.ne) if self.ne != None else 0
+            npoints += len(self.se) if self.se != None else 0
+            npoints += len(self.sw) if self.sw != None else 0
+        for c in self.children:
+          npoints += len(c)
         return npoints
 
 
@@ -191,7 +263,7 @@ class PMRQuadTree:
     def __str__(self):
         """Return a string representation of this node, suitably formatted."""
         sp = ' ' * self.depth * 2
-        s = str(self.boundary) + ' --> ' + str(self.point) 
+        s = str(self.boundary) + ' --> ' + str(self.points) 
         if not self.divided:
             return s
         return s + '\n' + '\n'.join([

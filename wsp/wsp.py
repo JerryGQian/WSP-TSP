@@ -20,6 +20,8 @@ def runWSP(filename, s, debug, quadtree, bucket):
     print(points, "\n")
     print(rootNode, "\n\n")
 
+
+
   wsp_count = 0
 
   # WSP queue search
@@ -32,14 +34,20 @@ def runWSP(filename, s, debug, quadtree, bucket):
   ax[1].plot([rootNode.boundary.xMin, rootNode.boundary.xMax],[rootNode.boundary.yMax, rootNode.boundary.yMax], color="gray")
   ax[1].plot([rootNode.boundary.xMin, rootNode.boundary.xMin],[rootNode.boundary.yMin, rootNode.boundary.yMax], color="gray")
   ax[1].plot([rootNode.boundary.xMax, rootNode.boundary.xMax],[rootNode.boundary.yMin, rootNode.boundary.yMax], color="gray")
+
+  if quadtree == ds.PKPRQuadTree:
+    print("PKPR aggregating")
+    rootNode.pk_aggregate(2)
+    rootNode.pk_draw()
+    print(rootNode)
+
   queue = [(rootNode, rootNode)]
   while len(queue) > 0:
     pair = queue[0]
     queue = queue[1:]
-
     block_A, block_B = pair[0], pair[1]
 
-    if len(block_A) == 0 or len(block_B) == 0:
+    if block_A == None or block_B == None or len(block_A) == 0 or len(block_B) == 0:
       continue
     
     points_A = block_A.get_points()
@@ -60,18 +68,26 @@ def runWSP(filename, s, debug, quadtree, bucket):
       ax[0].plot([block_A.center()[0], block_B.center()[0]],[block_A.center()[1], block_B.center()[1]])
       continue
 
-    if block_A.diameter() > block_B.diameter():
-      if (block_A.divided):
-        queue.append((block_B, block_A.nw))
-        queue.append((block_B, block_A.ne))
-        queue.append((block_B, block_A.se))
-        queue.append((block_B, block_A.sw))
+    if quadtree == ds.PKPRQuadTree:
+      if block_A.diameter() > block_B.diameter():
+        for child in block_A.children:
+          queue.append((block_B, child))
+      else:
+        for child in block_B.children:
+          queue.append((block_A, child))
     else:
-      if (block_B.divided):
-        queue.append((block_A, block_B.nw))
-        queue.append((block_A, block_B.ne))
-        queue.append((block_A, block_B.se))
-        queue.append((block_A, block_B.sw))
+      if block_A.diameter() > block_B.diameter():
+        if (block_A.divided):
+          queue.append((block_B, block_A.nw))
+          queue.append((block_B, block_A.ne))
+          queue.append((block_B, block_A.se))
+          queue.append((block_B, block_A.sw))
+      else:
+        if (block_B.divided):
+          queue.append((block_A, block_B.nw))
+          queue.append((block_A, block_B.ne))
+          queue.append((block_A, block_B.se))
+          queue.append((block_A, block_B.sw))
   
   # plot points
   x = []
