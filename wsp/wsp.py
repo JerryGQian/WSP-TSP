@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # USES PR QUADTREE!
 fig, ax = plt.subplots(1, 2, figsize=(12,6))
 
-def runWSP(filename, s, debug, quadtree, bucket):
+def runWSP(filename, s, debug, shrink, quadtree, bucket):
   points, minX, minY, maxX, maxY = file_load.loadFromFile(filename, False)
   # build point quadtree, insert in order
   rootNode = quadtree(ds.Rect(minX,minY,maxX,maxY), ax, bucket)
@@ -37,13 +37,15 @@ def runWSP(filename, s, debug, quadtree, bucket):
 
   if quadtree == ds.PKPRQuadTree or quadtree == ds.PKPMRQuadTree:
     #print("PKPR aggregating")
-    rootNode.pk_aggregate(3)
-    rootNode = ds.shrink_boundaries(rootNode, False)
+    rootNode.pk_aggregate(2)
+    if shrink:
+      rootNode = ds.shrink_boundaries(rootNode, False)
     rootNode.pk_draw()
     #print(rootNode)
   else:
-    rootNode = ds.shrink_boundaries(rootNode)
-    
+    if shrink:
+      rootNode = ds.shrink_boundaries(rootNode)
+
   queue = [(rootNode, rootNode)]
   while len(queue) > 0:
     pair = queue[0]

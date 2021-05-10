@@ -7,6 +7,7 @@ def parse_cmd(argv):
     s = 1           # default separation factor
     wsp_mode = True # uses WSPs
     debug = False   # debug info for Quadtree and WSPs
+    shrink = False  # shrink quadtree boundaries
     quadtree = ds.PMRQuadTree
     bucket = 1
 
@@ -28,8 +29,10 @@ def parse_cmd(argv):
             quadtree = ds.PointQuadTree
         if arg[:2] == "-b":
             bucket = int(arg[2:])
+        if arg == "-s":
+            shrink = True
         if arg == "-d":
             debug = True
     
-    return filename, s, wsp_mode, debug, quadtree, bucket
+    return filename, s, wsp_mode, debug, shrink, quadtree, bucket
 

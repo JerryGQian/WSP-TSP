@@ -18,9 +18,9 @@ import time
 
 timeInit = time.perf_counter()
 
-filename, s, wsp_mode, debug, quadtree, bucket = cmd_parse.parse_cmd(sys.argv)
+filename, s, wsp_mode, debug, shrink, quadtree, bucket = cmd_parse.parse_cmd(sys.argv)
 # build WSP tree
-wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, quadtree, bucket)
+wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, shrink, quadtree, bucket)
 
 # calculate well separated dictionary
 ws = dict() # point -> set of well separated points (far away by WSP)

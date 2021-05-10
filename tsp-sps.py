@@ -16,9 +16,9 @@ import time
 
 timeInit = time.perf_counter()
 
-filename, s, wsp_mode, debug, quadtree, bucket = cmd_parse.parse_cmd(sys.argv)
+filename, s, wsp_mode, debug, shrink, quadtree, bucket = cmd_parse.parse_cmd(sys.argv)
 # build WSP tree
-wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, quadtree, bucket)
+wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, shrink, quadtree, bucket)
 
 timeStart = time.perf_counter()
 
@@ -121,7 +121,7 @@ grouped_points = points.copy()
 for pair in splits:
     if len(pair[0]) >= 2 or len(pair[1]) >= 2:
         grouped_points = apply_split(pair, grouped_points.copy())
-
+#print(points)
 #print("grouped_points", grouped_points)
 
 # traversal
@@ -243,7 +243,7 @@ def find_path(start, glist, end, depth=-1):
             #    print(depth + 1, "res path:", reverse, npath)
             path += npath
         else:
-            print(depth + 1, "res point:", trio[1])
+            #print(depth + 1, "res point:", trio[1])
             path.append(trio[1])
     if reverse:
         path.reverse()
@@ -256,9 +256,9 @@ def find_path(start, glist, end, depth=-1):
 perms = []
 for item in grouped_points:
     rem = grouped_points.copy()
-    #rem.remove(item)
-    print("start", item)
-    perms.append(find_path(item, rem, item, 0))
+    perm = find_path(item, rem, item, 0)
+    perm.append(perm[0])
+    perms.append(perm)
 
 # find shortest permutation
 solution = []

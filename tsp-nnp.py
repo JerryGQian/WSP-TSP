@@ -16,9 +16,9 @@ import time
 
 timeInit = time.perf_counter()
 
-filename, s, wsp_mode, debug, quadtree, bucket = cmd_parse.parse_cmd(sys.argv)
+filename, s, wsp_mode, debug, shrink, quadtree, bucket = cmd_parse.parse_cmd(sys.argv)
 # build WSP tree
-wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, quadtree, bucket)
+wspTreeNode, wsp_count = wsp.runWSP(filename, s, debug, shrink, quadtree, bucket)
 
 timeStart = time.perf_counter()
 
@@ -31,7 +31,7 @@ for p in points:
     ws_orig[p] = dict()
 
 q = [wspTreeNode]
-if wsp_mode:
+if wsp_mode and False:
     while len(q) > 0:
         anode = q[0]
         q = q[1:]
@@ -97,7 +97,9 @@ perms = []
 for p in points:
     rem = points.copy()
     rem.remove(p)
-    perms.append(findPath(p, rem))
+    path = findPath(p, rem)
+    path.append(path[0])
+    perms.append(path)
 # find shortest permutation
 for perm in perms:
     dist = util.calcDist(perm)
