@@ -48,36 +48,41 @@ def find_relations(tree_node, add=True):
             for p in node.get_points():
                 sub_relations.add(p)
 
-    if tree_node.divided:
-        sub_relations.union(find_relations(tree_node.ne, True))
-        sub_relations.union(find_relations(tree_node.nw, True))
-        sub_relations.union(find_relations(tree_node.sw, True))
-        sub_relations.union(find_relations(tree_node.se, True))
+    if quadtree == ds.PKPRQuadTree or quadtree == ds.PKPMRQuadTree:
+        for child in tree_node.children:
+            sub_relations.union(find_relations(child, True))
+    else:
+        if tree_node.divided:
+            sub_relations.union(find_relations(tree_node.ne, True))
+            sub_relations.union(find_relations(tree_node.nw, True))
+            sub_relations.union(find_relations(tree_node.sw, True))
+            sub_relations.union(find_relations(tree_node.se, True))
 
     node_point_set = set(tree_node.get_points())
     to_remove = []
     if len(sub_relations) > 0:
         for p in sub_relations:
             if p in node_point_set:
-                #print("removing")
                 to_remove.append(p)
-                #sub_relations.remove(p)
         for p in to_remove:
             sub_relations.remove(p)
         if add:
-            #print("insert:", (node_point_set, sub_relations.copy()))
-            splits.insert(0, (node_point_set, sub_relations.copy()))
+            #print(len(splits))
+            if len(splits) == 0:
+                splits.append((node_point_set, sub_relations.copy()))
+            else:
+                for i in range(len(splits)):
+                    #print(len(node_point_set), len(splits[i][0]))
+                    if len(node_point_set) > len(splits[i][0]):
+                        splits.insert(i, (node_point_set, sub_relations.copy()))
+                        break
 
-    '''if tree_node.divided:
-        find_relations(tree_node.ne, True)
-        find_relations(tree_node.nw, True)
-        find_relations(tree_node.sw, True)
-        find_relations(tree_node.se, True)'''
+            #splits.insert(0, (node_point_set, sub_relations.copy()))
 
     return sub_relations
 
 find_relations(wspTreeNode, True)
-print(splits)
+#print(splits)
 
 def apply_split(pair, glist):
     list1 = []
@@ -116,55 +121,10 @@ grouped_points = points.copy()
 for pair in splits:
     if len(pair[0]) >= 2 or len(pair[1]) >= 2:
         grouped_points = apply_split(pair, grouped_points.copy())
-        #print("after pair:", pair, " -> ", grouped_points)
-    #print("GP: ", grouped_points)
-#print(points)
-#print(grouped_points)
+
+#print("grouped_points", grouped_points)
 
 # traversal
-'''def closest_sub(p1, sublist):
-  """Min dist point of sublist from p1"""
-  mind = 99999999
-  minPoint = None
-  for p2 in sublist:
-    dist = p1.distance_to(p2)
-    if dist < mind:
-        mind = dist
-        minPoint = p2
-  return minPoint, mind
-
-
-def find_pathX(start, rem):
-    path = [start]
-    if len(path) == num_points:
-        return [path]
-    while len(rem) > 0:
-        last_point = path[len(path) - 1]
-        #print(last_point)
-        minNext = None
-        minNextDist = float('inf')
-        for r in rem: # look through rem for next
-            if isinstance(r, list):
-                _, curNextDist = closest_sub(last_point, r)
-                #path += find_subpath(last_point, r)
-                #rem.remove(r)
-            else:
-                curNextDist = last_point.distance_to(r)
-            if curNextDist < minNextDist:
-                minNext = r
-                minNextDist = curNextDist
-        if minNext == None:
-            minNext = rem[0] # shouldnt be needed?
-        if isinstance(minNext, list):
-            #print("minNext sub", minNext)
-            path += find_subpath(last_point, minNext)
-            #print(minNext)
-        #else:
-            #print("should be point",minNext, len(rem))
-            
-            path.append(minNext)
-        rem.remove(minNext)
-    return path'''
 
 def does_list_contain(point, lst):
     for item in lst:
@@ -175,6 +135,17 @@ def does_list_contain(point, lst):
             if item == point:
                 return True
     return False
+
+def get_points_from_list(lst):
+    return get_points_from_list_rec(lst, [])
+
+def get_points_from_list_rec(lst, points):
+    for item in lst:
+        if isinstance(item, list):
+            get_points_from_list_rec(item, points)
+        else:
+            points.append(item)
+    return points
 
 def find_list_with(point, lst):
     for item in lst:
@@ -192,7 +163,8 @@ def clean_deep_lists(lst):
         return lst[0]
     return lst
 
-def find_path(start, glist, end):
+def find_path(start, glist, end, depth=-1):
+    loop = start == end # go back to start
 
     #print(start, end)
     reverse = False
@@ -205,17 +177,33 @@ def find_path(start, glist, end):
     glist = clean_deep_lists(glist)
 
     #print("glist:", glist)
-    #print("start:", start)
+    #print("start:", orig_start, start)
     rem = glist.copy()
     if start not in glist:
         start = find_list_with(start, glist)
-        #print("new start", start)
-    rem.remove(start) 
-    #print("rem:  ", rem)
-    #print(len(rem))
-    trio_path = [(None, start, None)]
-    if len(rem) == 0:
+
+    if isinstance(start, list) and end != None and does_list_contain(end, start):
+        # if start and end in same sublist, disassemble start sublist into rem
+        rem.remove(start)
+        rem += get_points_from_list(start)
+        rem.remove(orig_start)
+        start = orig_start
+    else:    
+        rem.remove(start) 
+
+    if isinstance(orig_start, list):
+        trio_path = [(None, start, None)]
+    else:
         trio_path = [(orig_start, start, None)]
+    if len(rem) == 0:
+        #print("at the end, trio:",  start)
+        trio_path = [(orig_start, start, None)]
+    def point_list_contains(pointlist, point):
+        if isinstance(pointlist, list):
+            return does_list_contain(point, pointlist)
+        else:
+            return point == pointlist
+
     # perform nearest neighbor on topmost layer
     while len(rem) > 0:
         prev_trio = trio_path[len(trio_path) - 1] # trio is (prev point, item, next point)
@@ -225,28 +213,42 @@ def find_path(start, glist, end):
         for r in rem: # look through rem for next
             p_A, p_B = util.min_proj_set_or_point(prev_item, r)
             dist = p_A.distance_to(p_B)
-            if end != None and r == end:
-                dist += 9999999999 # end_penalty
-            if dist < minNextDist:
+            if dist < minNextDist and (len(rem) == 1 or not point_list_contains(r, end)):
+                #if ((not r_is_list and r == end) or (r_is_list and does_list_contain(end, r))):
+                #    print("new min:", r, len(rem), dist)
                 minNext = (p_A, r, p_B) # (prev point, next item, next point)
                 minNextDist = dist
-        #print("conn next", minNext)
-        #print("triopath", trio_path, minNext, rem, end)
         trio_path[len(trio_path) - 1] = (prev_trio[0], prev_trio[1], minNext[0])
+        #print("set prev", trio_path[len(trio_path) - 1])
         trio_path.append((minNext[2], minNext[1], None))
         rem.remove(minNext[1])
+        '''if len(rem) == 0 and loop:
+            loop = False
+            rem.append(end)'''
 
     # convert to list, make subcalls
     path = []
-    print("trio_path:", trio_path)
+    #print("call info:", start, end)
+    last_trio = trio_path[len(trio_path) - 1]
+    trio_path[len(trio_path) - 1] = (last_trio[0], last_trio[1], end)
+    #if depth < 2 or True:
+    #    print(depth, "trio_path:", trio_path)
     for trio in trio_path:
         #print("trio:", trio)
         if isinstance(trio[1], list):
-            path += find_path(trio[0], trio[1], trio[2])
+            npath = find_path(trio[0], trio[1], trio[2], depth + 1)
+            #if depth < 2 or True:
+            #    #print("calling", trio)
+            #    print(depth + 1, "start and ends:", trio[0], trio[2])
+            #    print(depth + 1, "res path:", reverse, npath)
+            path += npath
         else:
+            print(depth + 1, "res point:", trio[1])
             path.append(trio[1])
     if reverse:
         path.reverse()
+    #if loop:
+        #path.append(path[0])
     return path
 
 
@@ -256,18 +258,7 @@ for item in grouped_points:
     rem = grouped_points.copy()
     #rem.remove(item)
     print("start", item)
-    perms.append(find_path(item, rem, item))
-    '''if isinstance(item, list):
-    else:
-        perms.append(find_path(item, rem))'''
-'''for item in grouped_points:
-    if isinstance(item, list):
-        rem = grouped_points.copy()
-        perms.append(find_subpath(None, rem))
-    else:
-        rem = grouped_points.copy()
-        rem.remove(item)
-        perms.append(find_path(item, rem))'''
+    perms.append(find_path(item, rem, item, 0))
 
 # find shortest permutation
 solution = []

@@ -48,11 +48,16 @@ if wsp_mode:
                         ws[b].add(a)
                         ws_orig[a][b] = apoints
                         ws_orig[b][a] = bpoints
-        if anode.divided:
-            q.append(anode.ne)
-            q.append(anode.nw)
-            q.append(anode.sw)
-            q.append(anode.se)
+        
+        if quadtree == ds.PKPRQuadTree or quadtree == ds.PKPMRQuadTree:
+            for child in anode.children:
+                q.append(child)
+        else:
+            if anode.divided:
+                q.append(anode.ne)
+                q.append(anode.nw)
+                q.append(anode.sw)
+                q.append(anode.se)
 
 points = wspTreeNode.get_points()
 num_points = len(points)
@@ -79,6 +84,7 @@ def buildPerms(perm, rem):
     next_perms = []
     if len(perm) == num_points:
         return [perm]
+    #print(len(rem))
     for r in rem:
         last_point = perm[len(perm) - 1]
         orig_set_finished = True

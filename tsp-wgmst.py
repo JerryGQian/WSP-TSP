@@ -41,11 +41,15 @@ def build_wsp_graph(cur_node):
             graph[p1].add(p2)
             graph[p2].add(p1)
 
-    if cur_node.divided:
-        build_wsp_graph(cur_node.ne)
-        build_wsp_graph(cur_node.nw)
-        build_wsp_graph(cur_node.sw)
-        build_wsp_graph(cur_node.se)
+    if quadtree == ds.PKPRQuadTree or quadtree == ds.PKPMRQuadTree:
+        for child in cur_node.children:
+            build_wsp_graph(child)
+    else:
+        if cur_node.divided:
+            build_wsp_graph(cur_node.ne)
+            build_wsp_graph(cur_node.nw)
+            build_wsp_graph(cur_node.sw)
+            build_wsp_graph(cur_node.se)
 
 build_wsp_graph(wspTreeNode)
 print("graph:", graph)

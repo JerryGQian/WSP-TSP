@@ -16,7 +16,9 @@ def parse_cmd(argv):
         s = float(argv[2])
     # check flags
     for arg in argv:
-        if arg == "-pkpr" or arg == "-pk":
+        if arg == "-pkpmr":
+            quadtree = ds.PKPMRQuadTree
+        if arg == "-pkpr":
             quadtree = ds.PKPRQuadTree
         if arg == "-pmr":
             quadtree = ds.PMRQuadTree
