@@ -14,7 +14,7 @@ import time
 # -d: debug info quadtree and WSP
 # -bf: brute force (turns off WSP)
 
-diff_mult = 1
+diff_mult = 2
 timeInit = time.perf_counter()
 
 filename, s, wsp_mode, debug, shrink, quadtree, bucket = cmd_parse.parse_cmd(sys.argv)
