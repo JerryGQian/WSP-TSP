@@ -5,8 +5,8 @@
 >python tsp-nnp.py att48.tsp 5 \
 >python tsp-sps.py att48.tsp 1 -pr -b4 \
 >python tsp-sps.py vlsi/xqf131.tsp 2 -pkpr \
->python tsp-spop.py vlsi/xqf131.tsp 2 -pkpmr -s \
->python tsp-treesp.py vlsi/xqf131.tsp 2 -pkpmr -s \
+>python tsp-spop.py vlsi/xqf131.tsp 1 -pkpmr       <--- Recommended \
+>python tsp-treesp.py vlsi/xqf131.tsp 1 -pkpmr     <--- Recommended \
 >python wsp-quadtree-test.py att48.tsp 1 -pr -b4 \
 >python wsp-quadtree-test.py att48.tsp 1 -pmr
 
@@ -31,7 +31,7 @@ flags:
 `tsp-sps.py` - WSP Subproblem Sorting + Nearest Neighbor (try spop and treesp as they are better) - Polynomial \
 `tsp-spop.py` - WSP Subproblem Connection + Brute Force + Nearest Neighbor - Polynomial \
 `tsp-treesp.py` - Quadtree Subproblem Connection + Brute Force + Nearest Neighbor - Polynomial \
-`tsp-wgmst.py` - WSP Graph MST, builds MST out of graph found from WSP min projections - In progress. Motivation: https://www.cs.umd.edu/~mount/Indep/Chaojun_Li/final-rept.pdf \
+`tsp-wgmst.py` - WSP Graph MST, builds MST out of graph found from WSP min projections - Motivation: https://www.cs.umd.edu/~mount/Indep/Chaojun_Li/final-rept.pdf \
 `tsp-msto.py` - WSP Graph MST only - incomplete optimization approach \
 `wsp-quadtree-test.py` - Runs WSP alg only to test on different datastructures/quadtrees \
 Point set data is located inside the `/data` directory \
